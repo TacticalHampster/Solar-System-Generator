@@ -120,13 +120,11 @@ int main()
                 print_orbit();
             else if (option2 == 4)
             {
-                Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
-                print_at_xy_wrapped("Press space to create a new solar system.", 30, 23, 87);
+                print_atmo_comps();
             }
             else if (option2 == 5)
             {
-                Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
-                print_at_xy_wrapped("Double-tap space to quit.", 30, 23, 87);
+                print_atmo_types();
             }
         }
         else if (option1 == 1) //Star
@@ -203,17 +201,9 @@ int main()
             case 'r':
                 gen = true;
                 break;
-            case ' ':
-                if (option1 == 0 && option2 == 5)
-                    quit = true;
-                else if (option1 == 0 && option2 == 4)
-                    gen = true;
-                break;
         }
     }
     while (!quit);
-
-    print_log("Quit program");
 
     //Free variables
     for (int i = 0; i < num_orbits; i++)
@@ -235,6 +225,5 @@ int main()
     free((void*)sol    );
     free((void*)planets);
 
-    print_log(" with code 0");
     crash(0);
 }

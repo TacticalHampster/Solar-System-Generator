@@ -97,6 +97,7 @@ void gen_planet_orbit(struct Star *star_ptr, struct Planet *planet_ptr, struct P
             planet_ptr->i = rand_double(0.0, belt_ptr->height)*((round(rand_double(0.0,1.0))-1.0) ? 1.0 : -1.0); //Inclination
             planet_ptr->l = fudge_double(belt_ptr->l)                                                          ; //LoAN
             planet_ptr->p = fudge_double(belt_ptr->p)                                                          ; //AoP
+            rocky_orbit(planet_ptr);
             break;
 
         default:

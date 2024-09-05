@@ -109,7 +109,7 @@ void atmo_star(struct Star *star_ptr)
         0.0
     };
 
-    double names[8] = {3, 24, 25, 26, 27, 28, 29, 2};
+    int names[8] = {3, 24, 25, 26, 27, 28, 29, 2};
     round_robin(comps, &remain, 8, names);
 
     atmo[ 3] = comps[0]; //Nitrogen
@@ -260,7 +260,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
     types[i]    = TYPE_GAS_GIANT;
     frost_index = i;
 
-    sprintf(logtext, "   Assigned frost orbit (%i) as type %c\n", frost_index, types[frost_index]);
+    sprintf(logtext, "   Assigned frost orbit (%2i) as type %c\n", frost_index, types[frost_index]);
     print_log(logtext);
 
     //Find habitable orbit so migrating giant doesn't go there
@@ -309,7 +309,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
         else
             types[i] = TYPE_RCK_GREEN;
 
-        sprintf(logtext, "   Assigned habitable orbit (%i) as type %c\n", i, types[i]);
+        sprintf(logtext, "   Assigned habitable orbit (%2i) as type %c\n", i, types[i]);
         print_log(logtext);
     }
 
@@ -330,7 +330,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
             else
                 types[i] = TYPE_RCK_DESRT;
 
-            sprintf(logtext, "   Assigned orbit %i as type %c\n", i, types[i]);
+            sprintf(logtext, "   Assigned orbit %2i as type %c\n", i, types[i]);
             print_log(logtext);
         }
     }
@@ -346,7 +346,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
             {
                 if (rand_double(0.0, 1.0) < ABELT_CHANCE)
                 {
-                    sprintf(logtext, "   Created asteroid belt at orbit %i\n", i);
+                    sprintf(logtext, "   Created asteroid belt at orbit %2i\n", i);
                     print_log(logtext);
                     types[i] = TYPE_BLT_INNER;
                     if (rand_double(0.0, 1.0) < (ABELT_CHANCE*2.0))
@@ -356,7 +356,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
                         i++;
                         frost_index++;
                         (*num)++;
-                        sprintf(logtext, "   Created dwarf planet at index %i, shifted frostline to index %i\n", i, frost_index);
+                        sprintf(logtext, "   Created dwarf planet at index %2i, shifted frostline to index %2i\n", i, frost_index);
                         print_log(logtext);
                     }
                 }
@@ -376,7 +376,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
                 else
                     types[i] = TYPE_RCK_DESRT;
 
-                sprintf(logtext, "   Assigned orbit %i as type %c\n", i, types[i]);
+                sprintf(logtext, "   Assigned orbit %2i as type %c\n", i, types[i]);
                 print_log(logtext);
             }
         }
@@ -428,7 +428,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
                 }
             }
 
-            sprintf(logtext, "   Assigned orbit %i as type %c\n", i, types[i]);
+            sprintf(logtext, "   Assigned orbit %2i as type %c\n", i, types[i]);
             print_log(logtext);
         }
     }
@@ -463,7 +463,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
             else
                 types[i+j] = TYPE_DWF_SEDNOID;
 
-            sprintf(logtext, "   Created kuiper object (%c) at index %i\n", types[i+j], i+j);
+            sprintf(logtext, "   Created kuiper object (%c) at index %2i\n", types[i+j], i+j);
             print_log(logtext);
         }
     }
@@ -482,7 +482,7 @@ char* pick_types(struct Star *star_ptr, int *num, double *orbits)
         else
         {
             adj_types[k-skip] = types[k];
-            sprintf(logtext, "      Confirmed index %i as type %c\n", k-skip, adj_types[k-skip]);
+            sprintf(logtext, "      Confirmed index %2i as type %c\n", k-skip, adj_types[k-skip]);
             print_log(logtext);
         }
     }

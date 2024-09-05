@@ -220,13 +220,7 @@ void print_log(char *text)
 //Moves the cursor off the main screen and displays crash message.
 void crash(int num)
 {
-    Movetoxy(0, 29);
-    Set_Color(0x07);
-
-    if (num >= 0)
-        exit(num);
-
-    printf("Error code %i: ", num);
+    char logtext[120];
 
     /*
     001-099        special
@@ -251,179 +245,187 @@ void crash(int num)
 
     switch (num)
     {
+        case 0:
+            sprintf(logtext, "\nProgram ended with code %i", num);
+            break;
         case -1:
-            printf("failed to move cursor, coordinates were too large");
+            sprintf(logtext, "\nError code %i: failed to move cursor, coordinates were too large", num);
             break;
         case -100:
-            printf("could not malloc main planet array");
+            sprintf(logtext, "\nError code %i: could not malloc main planet array", num);
             break;
         case -101:
-            printf("could not malloc inner belt gap array");
+            sprintf(logtext, "\nError code %i: could not malloc inner belt gap array", num);
             break;
         case -110:
-            printf("could not malloc star");
+            sprintf(logtext, "\nError code %i: could not malloc star", num);
             break;
         case -111:
-            printf("could not malloc photosphere array");
+            sprintf(logtext, "\nError code %i: could not malloc photosphere array", num);
             break;
         case -120:
-            printf("could not malloc orbit array");
+            sprintf(logtext, "\nError code %i: could not malloc orbit array", num);
             break;
         case -121:
-            printf("could not malloc initial planet types array");
+            sprintf(logtext, "\nError code %i: could not malloc initial planet types array", num);
             break;
         case -122:
-            printf("could not malloc final planet types array");
+            sprintf(logtext, "\nError code %i: could not malloc final planet types array", num);
             break;
         case -130:
-            printf("could not malloc atmosphere components array");
+            sprintf(logtext, "\nError code %i: could not malloc atmosphere components array", num);
             break;
         case -131:
-            printf("could not malloc detailed atmosphere components array");
+            sprintf(logtext, "\nError code %i: could not malloc detailed atmosphere components array", num);
             break;
         case -140:
-            printf("could not malloc satellite array for terrestrial planet");
+            sprintf(logtext, "\nError code %i: could not malloc satellite array for terrestrial planet", num);
             break;
         case -141:
-            printf("could not malloc satellite array for habitable planet");
+            sprintf(logtext, "\nError code %i: could not malloc satellite array for habitable planet", num);
             break;
         case -142:
-            printf("could not malloc satellite array for giant planet");
+            sprintf(logtext, "\nError code %i: could not malloc satellite array for giant planet", num);
             break;
         case -143:
-            printf("could not malloc satellite array for dwarf planet");
+            sprintf(logtext, "\nError code %i: could not malloc satellite array for dwarf planet", num);
             break;
         case -150:
-            printf("could not malloc ordinal string while populating options");
+            sprintf(logtext, "\nError code %i: could not malloc ordinal string while populating options", num);
             break;
         case -151:
-            printf("could not malloc description string while populating options");
+            sprintf(logtext, "\nError code %i: could not malloc description string while populating options", num);
             break;
         case -160:
-            printf("could not malloc statblock for star");
+            sprintf(logtext, "\nError code %i: could not malloc statblock for star", num);
             break;
         case -161:
-            printf("could not malloc statblock for planet");
+            sprintf(logtext, "\nError code %i: could not malloc statblock for planet", num);
             break;
         case -162:
-            printf("could not malloc statblock for asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc statblock for asteroid belt", num);
             break;
         case -163:
-            printf("could not malloc statblock for satellite");
+            sprintf(logtext, "\nError code %i: could not malloc statblock for satellite", num);
             break;
         case -170:
-            printf("could not malloc description text for star");
+            sprintf(logtext, "\nError code %i: could not malloc description text for star", num);
             break;
         case -171:
-            printf("could not malloc color description text for star");
+            sprintf(logtext, "\nError code %i: could not malloc color description text for star", num);
             break;
         case -172:
-            printf("could not malloc magnitude description text for star");
+            sprintf(logtext, "\nError code %i: could not malloc magnitude description text for star", num);
             break;
         case -173:
-            printf("could not malloc description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc description text for planet", num);
             break;
         case -174:
-            printf("could not malloc type description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc type description text for planet", num);
             break;
         case -175:
-            printf("could not malloc atmosphere description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc atmosphere description text for planet", num);
             break;
         case -176:
-            printf("could not malloc cloud description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc cloud description text for planet", num);
             break;
         case -177:
-            printf("could not malloc major rocky moon description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc major rocky moon description text for planet", num);
             break;
         case -178:
-            printf("could not malloc minor rocky moon description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc minor rocky moon description text for planet", num);
             break;
         case -179:
-            printf("could not malloc major icy moon description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc major icy moon description text for planet", num);
             break;
         case -180:
-            printf("could not malloc minor icy moon description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc minor icy moon description text for planet", num);
             break;
         case -181:
-            printf("could not malloc ring description text for planet");
+            sprintf(logtext, "\nError code %i: could not malloc ring description text for planet", num);
             break;
         case -182:
-            printf("could not malloc description text for inner asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc description text for inner asteroid belt", num);
             break;
         case -183:
-            printf("could not malloc description text for kuiper asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc description text for kuiper asteroid belt", num);
             break;
         case -184:
-            printf("could not malloc plutino description text for kuiper asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc plutino description text for kuiper asteroid belt", num);
             break;
         case -185:
-            printf("could not malloc cubewano description text for kuiper asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc cubewano description text for kuiper asteroid belt", num);
             break;
         case -186:
-            printf("could not malloc twotino description text for kuiper asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc twotino description text for kuiper asteroid belt", num);
             break;
         case -187:
-            printf("could not malloc scattered disk object description text for kuiper asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc scattered disk object description text for kuiper asteroid belt", num);
             break;
         case -188:
-            printf("could not malloc sednoid description text for kuiper asteroid belt");
+            sprintf(logtext, "\nError code %i: could not malloc sednoid description text for kuiper asteroid belt", num);
             break;
         case -189:
-            printf("could not malloc description text for satellite");
+            sprintf(logtext, "\nError code %i: could not malloc description text for satellite", num);
             break;
         case -190:
-            printf("could not malloc type description text for satellite");
+            sprintf(logtext, "\nError code %i: could not malloc type description text for satellite", num);
             break;
         case -191:
-            printf("could not malloc feature description text for satellite");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for satellite", num);
             break;
         case -192:
-            printf("could not malloc feature description text for feature \'cratered\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'cratered\'", num);
             break;
         case -193:
-            printf("could not malloc feature description text for feature \'volcanic\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'volcanic\'", num);
             break;
         case -194:
-            printf("could not malloc feature description text for feature \'continents\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'continents\'", num);
             break;
         case -195:
-            printf("could not malloc feature description text for feature \'continents\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'continents\'", num);
             break;
         case -196:
-            printf("could not malloc feature description text for feature \'ice\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'ice\'", num);
             break;
         case -197:
-            printf("could not malloc feature description text for feature \'cryovolcanic\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'cryovolcanic\'", num);
             break;
         case -198:
-            printf("could not malloc feature description text for feature \'polygon\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'polygon\'", num);
             break;
         case -199:
-            printf("could not malloc feature description text for feature \'storm\'");
+            sprintf(logtext, "\nError code %i: could not malloc feature description text for feature \'storm\'", num);
             break;
         case -200:
-            printf("failed to calculate apparent magnitude of star");
+            sprintf(logtext, "\nError code %i: failed to calculate apparent magnitude of star", num);
             break;
         case -220:
-            printf("unknown planet type encountered while assigning planet properties");
+            sprintf(logtext, "\nError code %i: unknown planet type encountered while assigning planet properties", num);
             break;
         case -230:
-            printf("unknown planet type encountered while assigning orbit parameters");
+            sprintf(logtext, "\nError code %i: unknown planet type encountered while assigning orbit parameters", num);
             break;
         case -240:
-            printf("unknown planet type encountered while generating atmosphere");
+            sprintf(logtext, "\nError code %i: unknown planet type encountered while generating atmosphere", num);
             break;
         case -241:
-            printf("unknown planet type encountered while whilst calculating albedo and temperature");
+            sprintf(logtext, "\nError code %i: unknown planet type encountered while whilst calculating albedo and temperature", num);
             break;
         case -250:
-            printf("unknown planet type encountered while generating satellite system");
+            sprintf(logtext, "\nError code %i: unknown planet type encountered while generating satellite system", num);
             break;
         default:
-            printf("Unknown error code");
+            sprintf(logtext, "\nError code %i: Unknown error code", num);
     }
 
-    //printf("\n");
+    Movetoxy(0, 29);
+    Set_Color(0x07);
+
+    print_log(logtext);
+    printf(logtext);
+
     exit(num);
 }
 

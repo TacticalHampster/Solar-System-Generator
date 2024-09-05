@@ -29,7 +29,7 @@
 #define COLOR_MOON_MAJOR_R  0x0F
 #define COLOR_MOON_MINOR_R  0x07
 
-#define COLOR_ATMO_HYDROGEN 0x0F
+#define COLOR_ATMO_HYDROGEN 0x07
 #define COLOR_ATMO_ARGON    0x0D
 #define COLOR_ATMO_NITROGEN 0x09
 #define COLOR_ATMO_OXYGEN   0x0B
@@ -45,7 +45,7 @@
 #define COLOR_ATMO_SULFUR   0x0E
 #define COLOR_ATMO_CARBON   0x08
 #define COLOR_ATMO_ALKALI   0x07
-#define COLOR_ATMO_THOLINS  0x04
+#define COLOR_ATMO_THOLINS  0x08
 #define COLOR_ATMO_SILICON  0x06
 #define COLOR_ATMO_IRON     0x07
 
@@ -69,6 +69,8 @@ void print_moon_desc(struct Moon *moon_ptr);
 
 void print_units(void);
 void print_desc(void);
+void print_atmo_comps(void);
+void print_atmo_types(void);
 void print_orbit(void);
 void print_title(struct Star *star_ptr, struct Planet *planets, int num_planets);
 
@@ -433,7 +435,7 @@ void pop_options(struct Star *star_ptr, struct Planet *planets, int num_planets,
         else
             color_back = COLOR_DEFAULT_BACK;
         Set_Color(color_back + color_text);
-        printf(" Regenerate             ");
+        printf(" Atmospheric Compounds  ");
 
         Movetoxy(2, rows+8);
         color_text = COLOR_DEFAULT_TEXT;
@@ -442,7 +444,7 @@ void pop_options(struct Star *star_ptr, struct Planet *planets, int num_planets,
         else
             color_back = COLOR_DEFAULT_BACK;
         Set_Color(color_back + color_text);
-        printf(" Quit                   ");
+        printf(" Atmosphere Types       ");
     }
     else if (planet_option == 1)
     {}
@@ -738,11 +740,11 @@ void print_planet_props(struct Planet *planet_ptr)
     sprintf(text, "╥───────────────────────────────"  "┬──────────────────────────────"   "┬────────────────────────────┐"
                 "\n║           Properties          "  "│       Bulk Composition       "   "│           Rings            │"
                 "\n╟───────────────┬───────────────"  "┼──────────────┬───────────────"   "┼────────────────────────────┤"
-                "\n║  Mass         │ %8.3f %2s   "    "│  Metal mass  │  %6.3f %%     "   "│"
-                "\n║  Radius       │ %8.3f %2s   "    "│  Rocky mass  │  %6.3f %%     "   "│"
-                "\n║  Gravity      │ %8.3f G    "     "│  Water mass  │  %6.3f %%     "   "│"
-                "\n║  Escape vel.  │ %8.3f km/s "     "│  Ices  mass  │  %6.3f %%     "   "│"
-                "\n║  Temperature  │ %8.3f °C   "     "│  H₂+He mass  │  %6.3f %%     "   "│"
+                "\n║  Mass         │ %8.3f %2s   "    "│              │               "   "│"
+                "\n║  Radius       │ %8.3f %2s   "    "│              │               "   "│"
+                "\n║  Gravity      │ %8.3f G    "     "│              │               "   "│"
+                "\n║  Escape vel.  │ %8.3f km/s "     "│              │               "   "│"
+                "\n║  Temperature  │ %8.3f °C   "     "│              │               "   "│"
                 "\n║  Bond albedo  │ %8.3f %%    "    "│  Density     │  %6.3f g/cm³ "    "│"
                 "\n╟───────────────┴───────────────"  "┼──────────────┴───────────────"   "┤"
                 "\n║       Position Parameters     "  "│          Atmosphere          "   "│"
@@ -771,8 +773,8 @@ void print_planet_props(struct Planet *planet_ptr)
                              planet_ptr->type != TYPE_DWF_TWOTINO &&
                              planet_ptr->type != TYPE_DWF_SCATTER &&
                              planet_ptr->type != TYPE_DWF_SEDNOID &&
-                             planet_ptr->mass < 0.001 ? "Zg" : "M🜨")),
-                                                                                                                    planet_ptr->bulk_metal*100.0,
+                             planet_ptr->mass > 0.001 ? "M🜨" : "Zg")),
+
                       rad,  (planet_ptr->type != TYPE_DWF_PLNTSML &&
                              planet_ptr->type != TYPE_DWF_PLUTINO &&
                              planet_ptr->type != TYPE_DWF_CUBEWNO &&
@@ -785,11 +787,11 @@ void print_planet_props(struct Planet *planet_ptr)
                              planet_ptr->type != TYPE_DWF_CUBEWNO &&
                              planet_ptr->type != TYPE_DWF_TWOTINO &&
                              planet_ptr->type != TYPE_DWF_SCATTER &&
-                             planet_ptr->type != TYPE_DWF_SEDNOID  ? "km" : "R🜨")),
-                                                                                                                    planet_ptr->bulk_rock *100.0,
-                      planet_ptr->surf_grav,                                                                        planet_ptr->bulk_water*100.0,
-                      planet_ptr->esc_v/1000.0,                                                                     planet_ptr->bulk_ices *100.0,
-                      planet_ptr->surf_temp-KELVIN,                                                                 planet_ptr->bulk_noble*100.0,
+                             planet_ptr->type != TYPE_DWF_SEDNOID  ? "R🜨" : "km")),
+
+                      planet_ptr->surf_grav,
+                      planet_ptr->esc_v/1000.0,
+                      planet_ptr->surf_temp-KELVIN,
                       planet_ptr->albedo*100.0,                                                                     planet_ptr->bulk_dens,
 
                       planet_ptr->a,
@@ -831,6 +833,66 @@ void print_planet_props(struct Planet *planet_ptr)
     Movetoxy(27, rows+1);
     printf("╣");
 
+    //Print composition info
+
+    int colors[5] = {
+        COLOR_ATMO_IRON    , //Metals
+        COLOR_ATMO_SILICON , //Rock
+        COLOR_ATMO_WATER   , //Water
+        COLOR_ATMO_NITROGEN, //Ices
+        COLOR_ATMO_HYDROGEN  //H+He
+    };
+
+    char *names[] = {
+        "Metals"   ,
+        "Silicates",
+        "Water"    ,
+        "Volatiles",
+        "H₂+Helium ",
+    };
+
+    double comps[5] = {
+        planet_ptr->bulk_metal,
+        planet_ptr->bulk_rock ,
+        planet_ptr->bulk_water,
+        planet_ptr->bulk_ices ,
+        planet_ptr->bulk_noble,
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4-i; j++)
+        {
+            if (comps[j] < comps[j+1])
+            {
+                double temp_d = comps[j+1];
+                comps[j+1]    = comps[j]  ;
+                comps[j]      = temp_d    ;
+
+                char *temp_c  = names[j+1];
+                names[j+1]    = names[j]  ;
+                names[j]      = temp_c    ;
+
+                int temp_i    = colors[j+1];
+                colors[j+1]   = colors[j]  ;
+                colors[j]     = temp_i     ;
+            }
+        }
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        if (!comps[i])
+            break;
+
+        sprintf(text, "%-10s  │  %6.3f %%", names[i], comps[i]*100.0);
+        Set_Color(colors[i]);
+        print_at_xy(text, 62, 3+i);
+    }
+
+    Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
+    print_at_xy("│\n│\n│\n│\n│", 74, 3);
+
     //Print atmosphere info
 
     if (planet_ptr->has_atmo)
@@ -852,7 +914,7 @@ void print_planet_props(struct Planet *planet_ptr)
 
         print_at_xy(text, 59, 11);
 
-        int colors[24] = {
+        int atmo_colors[24] = {
             COLOR_ATMO_HYDROGEN, //Hydrogen
             COLOR_ATMO_HYDROGEN, //Helium
             COLOR_ATMO_ARGON   , //Argon
@@ -926,9 +988,9 @@ void print_planet_props(struct Planet *planet_ptr)
                     atmo_names[j+1] = atmo_names[j]  ;
                     atmo_names[j]   = temp_c         ;
 
-                    int temp_i  = colors[j+1];
-                    colors[j+1] = colors[j]  ;
-                    colors[j]   = temp_i     ;
+                    int temp_i       = atmo_colors[j+1];
+                    atmo_colors[j+1] = atmo_colors[j]  ;
+                    atmo_colors[j]   = temp_i     ;
                 }
             }
         }
@@ -968,7 +1030,7 @@ void print_planet_props(struct Planet *planet_ptr)
             }
 
             //Print
-            Set_Color(colors[i]);
+            Set_Color(atmo_colors[i]);
             print_at_xy(text, 62, 12+i);
         }
 
@@ -1109,10 +1171,10 @@ void print_belt_props(struct Planet *planet_ptr)
     sprintf(text, "╥───────────────────────────────"   "┬──────────────────────────────"   "┬────────────────────────────┐"
                 "\n║           Properties          "   "│   Composition of Asteroids   "   "│        Kirkwood Gaps       │"
                 "\n╟───────────────┬───────────────"   "┼──────────────┬───────────────"   "┼────────────────────────────┤"
-                "\n║  Mass         │ %8.3f %2s   "     "│  Carbonous   │  %6.3f %%     "   "│"
-                "\n║  Width        │  %7.3f AU   "     "│  Siliceous   │  %6.3f %%     "   "│"
-                "\n║  Height       │ ±%7.3f °    "     "│  Metallic    │  %6.3f %%     "   "│"
-                "\n║               │               "   "│  Icy         │  %6.3f %%     "   "│"
+                "\n║  Mass         │ %8.3f %2s   "     "│              │               "   "│"
+                "\n║  Width        │  %7.3f AU   "     "│              │               "   "│"
+                "\n║  Height       │ ±%7.3f °    "     "│              │               "   "│"
+                "\n║               │               "   "│              │               "   "│"
                 "\n║               │               "   "│              │               "   "│"
                 "\n║  Avg. albedo  │  %7.3f %%    "    "│  Avg. dens.  │  %6.3f g/cm³ "    "│"
                 "\n╟───────────────┴───────────────"   "┼──────────────┴───────────────"   "┤"
@@ -1130,12 +1192,8 @@ void print_belt_props(struct Planet *planet_ptr)
                 "\n╠═══════════════╧═══════════════"   "╧══════════════════════════════"   "╧",
 
                       planet_ptr->mass, (planet_ptr->mass < 0.001 ? "Zg" : "M🜨"),
-                      planet_ptr->bulk_carbon*100.0,
                       planet_ptr->radius,
-                      planet_ptr->bulk_rock*100.0,
                       planet_ptr->height,
-                      planet_ptr->bulk_metal*100.0,
-                      planet_ptr->bulk_ices*100.0,
                       planet_ptr->albedo*100.0,
                       planet_ptr->bulk_dens,
                       planet_ptr->a,
@@ -1152,6 +1210,63 @@ void print_belt_props(struct Planet *planet_ptr)
 
     Movetoxy(27, rows+1);
     printf("╣");
+
+    //Print composition info
+
+    int colors[4] = {
+        COLOR_ATMO_IRON    , //Metals
+        COLOR_ATMO_SILICON , //Rock
+        COLOR_ATMO_NITROGEN, //Ices
+        COLOR_ATMO_CARBON    //Carbonous
+    };
+
+    char *names[] = {
+        "Metallic" ,
+        "Siliceous",
+        "Ice-based",
+        "Carbonous",
+    };
+
+    double comps[4] = {
+        planet_ptr->bulk_metal,
+        planet_ptr->bulk_rock ,
+        planet_ptr->bulk_ices ,
+        planet_ptr->bulk_carbon
+    };
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3-i; j++)
+        {
+            if (comps[j] < comps[j+1])
+            {
+                double temp_d = comps[j+1];
+                comps[j+1]    = comps[j]  ;
+                comps[j]      = temp_d    ;
+
+                char *temp_c  = names[j+1];
+                names[j+1]    = names[j]  ;
+                names[j]      = temp_c    ;
+
+                int temp_i    = colors[j+1];
+                colors[j+1]   = colors[j]  ;
+                colors[j]     = temp_i     ;
+            }
+        }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (!comps[i])
+            break;
+
+        sprintf(text, "%-10s  │  %6.3f %%", names[i], comps[i]*100.0);
+        Set_Color(colors[i]);
+        print_at_xy(text, 62, 3+i);
+    }
+
+    Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
+    print_at_xy("│\n│\n│\n│\n│", 74, 3);
 
     //Print gap info
     if (planet_ptr->rings != nullptr)
@@ -1229,12 +1344,12 @@ void print_moon_props(struct Moon *moon_ptr)
     sprintf(text, "╥───────────────────────────────"  "┬──────────────────────────────"   "┬"
                 "\n║           Properties          "  "│       Bulk Composition       "   "│"
                 "\n╟───────────────┬───────────────"  "┼──────────────┬───────────────"   "┤"
-                "\n║  Mass         │ %8.3f %2s   "    "│  Density     │  %6.3f g/cm³ "    "│"
-                "\n║  Radius A     │ %8.3f km   "     "│  Metal mass  │  %6.3f %%     "   "│"
-                "\n║  Radius B     │ %8.3f km   "     "│  Rocky mass  │  %6.3f %%     "   "│"
-                "\n║  Radius C     │ %8.3f km   "     "│  Water mass  │  %6.3f %%     "   "│"
-                "\n║  Gravity      │ %8.3f m/s² "     "│  Ices  mass  │  %6.3f %%     "   "│"
-                "\n║  Escape vel.  │ %8.3f m/s  "     "│  H₂+He mass  │  %6.3f %%     "   "│"
+                "\n║  Mass         │ %8.3f %2s   "    "│              │               "   "│"
+                "\n║  Radius A     │ %8.3f km   "     "│              │               "   "│"
+                "\n║  Radius B     │ %8.3f km   "     "│              │               "   "│"
+                "\n║  Radius C     │ %8.3f km   "     "│              │               "   "│"
+                "\n║  Gravity      │ %8.3f m/s² "     "│              │               "   "│"
+                "\n║  Escape vel.  │ %8.3f m/s  "     "│  Density     │  %6.3f g/cm³ "    "│"
                 "\n╟───────────────┴───────────────"  "┼──────────────┴───────────────"   "┘"
                 "\n║       Position Parameters     "  "│                              "   " "
                 "\n╟───────────────┬───────────────"  "┤                              "   " "
@@ -1250,12 +1365,12 @@ void print_moon_props(struct Moon *moon_ptr)
                 "\n╠═══════════════╧═══════════════"  "╧══════════════════════════════"   "═",
 
                       (moon_ptr->mass < 0.001 ? moon_ptr->mass*5972200.0 : moon_ptr->mass), (moon_ptr->mass < 0.001 ? "Zg" : "M🜨"),
-                                                      moon_ptr->bulk_dens,
-                      moon_ptr->rad_a,                moon_ptr->bulk_metal*100.0,
-                      moon_ptr->rad_b,                moon_ptr->bulk_rock*100.0,
-                      moon_ptr->rad_c,                0.0,
-                      moon_ptr->surf_grav*GRAVITY,    moon_ptr->bulk_ices*100.0,
-                      moon_ptr->esc_v,                0.0,
+
+                      moon_ptr->rad_a,
+                      moon_ptr->rad_b,
+                      moon_ptr->rad_c,
+                      moon_ptr->surf_grav*GRAVITY,
+                      moon_ptr->esc_v,                moon_ptr->bulk_dens,
 
                                                         (moon_ptr->a >= 9999.0 ? moon_ptr->a*(6378000.0/149597870700.0) : moon_ptr->a), ((moon_ptr->a < 9999.0) ? "R🜨" : "AU"),
                                                         moon_ptr->e*100.0,
@@ -1300,6 +1415,60 @@ void print_moon_props(struct Moon *moon_ptr)
 
     Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
     print_at_xy(text, 27, 0);
+
+    //Print composition info
+
+    int colors[3] = {
+        COLOR_ATMO_IRON    , //Metals
+        COLOR_ATMO_SILICON , //Rock
+        COLOR_ATMO_NITROGEN  //Ices
+    };
+
+    char *names[] = {
+        "Metals"   ,
+        "Silicates",
+        "Volatiles"
+    };
+
+    double comps[3] = {
+        moon_ptr->bulk_metal,
+        moon_ptr->bulk_rock ,
+        moon_ptr->bulk_ices
+    };
+
+    for (int i = 0; i < 2; i++)
+    {
+        for (int j = 0; j < 2-i; j++)
+        {
+            if (comps[j] < comps[j+1])
+            {
+                double temp_d = comps[j+1];
+                comps[j+1]    = comps[j]  ;
+                comps[j]      = temp_d    ;
+
+                char *temp_c  = names[j+1];
+                names[j+1]    = names[j]  ;
+                names[j]      = temp_c    ;
+
+                int temp_i    = colors[j+1];
+                colors[j+1]   = colors[j]  ;
+                colors[j]     = temp_i     ;
+            }
+        }
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        if (!comps[i])
+            break;
+
+        sprintf(text, "%-10s  │  %6.3f %%", names[i], comps[i]*100.0);
+        Set_Color(colors[i]);
+        print_at_xy(text, 62, 3+i);
+    }
+
+    Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
+    print_at_xy("│\n│\n│\n│\n│", 74, 3);
 
     Movetoxy(27, rows+1);
     printf("╣");
@@ -2415,29 +2584,260 @@ void print_desc(void)
 }
 
 //This function prints an explanation of the atmospheres.
-void print_atmo(void)
+void print_atmo_comps(void)
 {
     Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
-    print_at_xy("Atmospheres in this program are composed of nine substances:"
+    print_at_xy("Atmospheres in this program are composed of 23 different substances. Most of these "
+              "\nsubstances are pure elements or named chemical compounds, but some are abbreviated:"
               "\n"
-              "\nHYDROGEN, OXYGEN, WATER VAPOR and OTHER GASES are exactly what they sound like."
+              "\nN-OXIDES are primarily (~95%) nitric oxide (NO), with small quantities (~2.5%) of"
+              "\nnitrous oxide (N₂O) and nitrogen dioxide (NO₂)."
               "\n"
-              "\nNITROGENS are primarily diatomic nitrogen, with small quantities of oxides like NO, N₂O,"
-              "\n          and NO₂."
+              "\nC-OXIDES are primarily (~99%) carbon dioxide (CO₂), with a small amount (~1%) of"
+              "\ncarbon monoxide (CO)."
               "\n"
-              "\nCARBONS are primarily carbon dioxide, with a small amount of carbon monoxide."
+              "\nS-OXIDES are primarily (~99%) sulfur dioxide (SO₂), with a small amount (~1%) of"
+              "\nsulfur trioxide (SO₃)."
               "\n"
-              "\nSULFURS are primarily sulfur dioxide on dry worlds and primarily hydrogen sulfide on wet"
-              "\n        worlds. Each contains small quantities of the other chemical and of sulfur"
-              "\n        trioxide."
+              "\nH-SULFIDE is hydrogen sulfide (H₂S), DEUTERIDE is hydrogen deuteride (²H¹H), and"
+              "\nCYANIDE is hydrogen cyanide (HCN)."
               "\n"
-              "\nNOBLE GASES are primarily helium on giant worlds and primarily argon on terrestrial"
-              "\n            worlds. This category does include all noble gases in each case."
-              "\n"
-              "\nVOLATILES are more complex gases like ammonia, methane, and other gases common in ice"
-              "\n          giants.",
+              "\nTHOLINS are complex hydrocarbons and organic molecules formed by solar irradiation of"
+              "\nsimpler hydrocarbons. There is no single chemical formula for all tholins.",
         30,
         2
+    );
+
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("N-OXIDES", 30, 5);
+
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("C-OXIDES", 30, 8);
+
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("S-OXIDES", 30, 11);
+
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("H-SULFIDE", 30, 14);
+
+    Set_Color(COLOR_ATMO_HYDROGEN);
+    print_at_xy("DEUTERIDE", 67, 14);
+
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("CYANIDE", 30, 15);
+
+    Set_Color(COLOR_ATMO_THOLINS);
+    print_at_xy("THOLINS", 30, 17);
+}
+
+//This functions prints a description of the types of atmospheres that can be generated.
+void print_atmo_types(void)
+{
+    Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
+    print_at_xy("╥──────────────────────╥──────────────────────╥──────────────────────╥──────────────────────┐"
+              "\n║       VOLCANIC       ║       HYCEAN         ║   BIO-TERRAFORMED    ║      PRIMORDIAL      │"
+              "\n║                      ║                      ║                      ║                      │"
+              "\n║  Generates for dead  ║  Generates for dead  ║  Generates only for  ║  Generates for gas   │"
+              "\n║  terrestrial worlds. ║  aquatic worlds.     ║  habitable worlds.   ║  or icy giants.      │"
+              "\n╟──────────────────────╫──────────────────────╫──────────────────────╫──────────────────────┤"
+              "\n║  Carbon oxides ~96%  ║  Carbon oxides ~90%  ║  Nitrogen      ~66%  ║  Hydrogen   ~80-90%  │"
+              "\n║  Nitrogen       ~3%  ║  Nitrogen       ~3%  ║  Oxygen        ~33%  ║  Helium      ~9-12%  │"
+              "\n║  Argon          ~1%  ║  Water vapor    ~3%  ║  Argon          ~1%  ║  Methane      ~0.5%  │"
+              "\n╟──────────────────────╫──────────────────────╫──────────────────────╫──────────────────────┤"
+              "\n║  Random halogen      ║  Random halogen      ║  Random halogen      ║  Neon                │"
+              "\n║  Random noble gas    ║  Random noble gas    ║  Random noble gas    ║  Oxygen              │"
+              "\n║  Oxygen              ║  Argon               ║  Methane             ║  Hydrogen deuteride  │"
+              "\n║  Methane             ║  Oxygen              ║  Ammonia             ║  Ethane              │"
+              "\n║  Ammonia             ║  Methane             ║  Phosphine           ║  Ammonia             │"
+              "\n║  Phosphine           ║  Ammonia             ║  Water vapor         ║  Phosphine           │"
+              "\n║  Hydrogen sulfide    ║  Phosphine           ║  Hydrogen sulfide    ║  Water vapor         │"
+              "\n║  Sulfur oxides       ║  Hydrogen sulfide    ║  Sulfur oxides       ║  Hydrogen sulfide    │"
+              "\n║  Nitrogen oxides     ║  Sulfur oxides       ║  Carbon oxides       ║  Sulfur oxides       │"
+              "\n║                      ║  Nitrogen oxides     ║  Nitrogen oxides     ║  Tholins             │"
+              "\n║                      ║                      ║                      ║  Cyanides            │"
+              "\n╠══════════════════════╩══════════════════════╩══════════════════════╩══════════════════════╡",
+        27,
+        0
+    );
+
+    Movetoxy(27, rows+1);
+    printf("╣");
+
+    //Color major components
+
+    //First row
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Carbon oxides ~96%", 30, 6);
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Carbon oxides ~90%", 53, 6);
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Nitrogen      ~66%", 76, 6);
+    Set_Color(COLOR_ATMO_HYDROGEN);
+    print_at_xy("Hydrogen   ~80-90%", 99, 6);
+
+    //Second row
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Nitrogen       ~3%", 30, 7);
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Nitrogen       ~3%", 53, 7);
+    Set_Color(COLOR_ATMO_OXYGEN);
+    print_at_xy("Oxygen        ~33%", 76, 7);
+    Set_Color(COLOR_ATMO_HYDROGEN);
+    print_at_xy("Helium      ~9-12%", 99, 7);
+
+    //Third row
+    Set_Color(COLOR_ATMO_ARGON);
+    print_at_xy("Argon          ~1%", 30, 8);
+    Set_Color(COLOR_ATMO_WATER);
+    print_at_xy("Water vapor    ~3%", 53, 8);
+    Set_Color(COLOR_ATMO_ARGON);
+    print_at_xy("Argon          ~1%", 76, 8);
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Methane      ~0.5%", 99, 8);
+
+    //Color minor components
+
+    //First row
+    Set_Color(COLOR_ATMO_FLUORINE);
+    print_at_xy("Ran", 30, 10);
+    Set_Color(COLOR_ATMO_CHLORINE);
+    printf("dom ");
+    Set_Color(COLOR_ATMO_BROMINE);
+    printf("halo");
+    Set_Color(COLOR_ATMO_IODINE);
+    printf("gen");
+    Set_Color(COLOR_ATMO_FLUORINE);
+    print_at_xy("Ran", 53, 10);
+    Set_Color(COLOR_ATMO_CHLORINE);
+    printf("dom ");
+    Set_Color(COLOR_ATMO_BROMINE);
+    printf("halo");
+    Set_Color(COLOR_ATMO_IODINE);
+    printf("gen");
+    Set_Color(COLOR_ATMO_FLUORINE);
+    print_at_xy("Ran", 76, 10);
+    Set_Color(COLOR_ATMO_CHLORINE);
+    printf("dom ");
+    Set_Color(COLOR_ATMO_BROMINE);
+    printf("halo");
+    Set_Color(COLOR_ATMO_IODINE);
+    printf("gen");
+    Set_Color(COLOR_ATMO_NEON);
+    print_at_xy("Neon", 99, 10);
+
+    //Second row
+    Set_Color(COLOR_ATMO_NEON);
+    print_at_xy("Random ", 30, 11);
+    Set_Color(COLOR_ATMO_KRYPTON);
+    printf("noble ");
+    Set_Color(COLOR_ATMO_XENON);
+    printf("gas");
+    Set_Color(COLOR_ATMO_NEON);
+    print_at_xy("Random ", 53, 11);
+    Set_Color(COLOR_ATMO_KRYPTON);
+    printf("noble ");
+    Set_Color(COLOR_ATMO_XENON);
+    printf("gas");
+    Set_Color(COLOR_ATMO_NEON);
+    print_at_xy("Random ", 76, 11);
+    Set_Color(COLOR_ATMO_KRYPTON);
+    printf("noble ");
+    Set_Color(COLOR_ATMO_XENON);
+    printf("gas");
+    Set_Color(COLOR_ATMO_OXYGEN);
+    print_at_xy("Oxygen", 99, 11);
+
+    //Third row
+    Set_Color(COLOR_ATMO_OXYGEN);
+    print_at_xy("Oxygen", 30, 12);
+    Set_Color(COLOR_ATMO_ARGON);
+    print_at_xy("Argon", 53, 12);
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Methane", 76, 12);
+    Set_Color(COLOR_ATMO_HYDROGEN);
+    print_at_xy("Hydrogen deuteride", 99, 12);
+
+    //Fourth row
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Methane", 30, 13);
+    Set_Color(COLOR_ATMO_OXYGEN);
+    print_at_xy("Oxygen", 53, 13);
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Ammonia", 76, 13);
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Ethane", 99, 13);
+
+    //Fifth row
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Ammonia", 30, 14);
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Methane", 53, 14);
+    Set_Color(COLOR_ATMO_PHOSPHOR);
+    print_at_xy("Phosphine", 76, 14);
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Ammonia", 99, 14);
+
+    //Sixth row
+    Set_Color(COLOR_ATMO_PHOSPHOR);
+    print_at_xy("Phosphine", 30, 15);
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Ammonia", 53, 15);
+    Set_Color(COLOR_ATMO_WATER);
+    print_at_xy("Water vapor", 76, 15);
+    Set_Color(COLOR_ATMO_PHOSPHOR);
+    print_at_xy("Phosphine", 99, 15);
+
+    //Seventh row
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Hydrogen sulfide", 30, 16);
+    Set_Color(COLOR_ATMO_PHOSPHOR);
+    print_at_xy("Phosphine", 53, 16);
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Hydrogen sulfide", 76, 16);
+    Set_Color(COLOR_ATMO_WATER);
+    print_at_xy("Water vapor", 99, 16);
+
+    //Eighth row
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Sulfur oxides", 30, 17);
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Hydrogen sulfide", 53, 17);
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Sulfur oxides", 76, 17);
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Hydrogen sulfide", 99, 17);
+
+    //Ninth row
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Nitrogen oxides", 30, 18);
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Sulfur oxides", 53, 18);
+    Set_Color(COLOR_ATMO_CARBON);
+    print_at_xy("Carbon oxides", 76, 18);
+    Set_Color(COLOR_ATMO_SULFUR);
+    print_at_xy("Sulfur oxides", 99, 18);
+
+    //Tenth row
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Nitrogen oxides", 53, 19);
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Nitrogen oxides", 76, 19);
+    Set_Color(COLOR_ATMO_THOLINS);
+    print_at_xy("Tholins", 99, 19);
+
+    //Eleventh row
+    Set_Color(COLOR_ATMO_NITROGEN);
+    print_at_xy("Cyanides", 99, 20);
+
+    //Text description
+    Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
+    print_at_xy_wrapped("These are the four possible atmosphere presets that can generate for planets. Each one has three \'major components\'"
+                        " that are guaranteed to generate. They are listed in the middle boxes, with approximate percentages. The remainder is"
+                        " composed of random \'minor components\', listed in the bottom boxes. \'Random halogen\' can be fluorine, chlorine,"
+                        " bromine, or iodine. \'Random noble gas\' can be neon, krypton, or xenon.",
+        30,
+        23,
+        87
     );
 }
 

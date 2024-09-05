@@ -530,6 +530,10 @@ void gasmn_orbit(struct Star *star_ptr, struct Planet *planet_ptr, double *orbit
             die = (int)ceil(rand_double(0.0,18.0));
         while (die == i_already[0] || die == i_already[1] || die == i_already[2]);
 
+        sprintf(logtext, "         Generating group %i: ", g);
+        print_log(logtext);
+
+
         i_already[g] = die;
 
         i_max = (double)die*10.0;
@@ -558,15 +562,15 @@ void gasmn_orbit(struct Star *star_ptr, struct Planet *planet_ptr, double *orbit
             else
                 gen_rck_minor(planet_ptr, &moons[i+j]);
 
-            print_log("         Generated moon\n");
+            print_log("|");
 
-            moons[i+j].a = rand_double(a_min, a_max);                                                           //Semimajor axis
-            moons[i+j].e = rand_double(e_min, e_max);                                                           //Eccentricity
+            moons[i+j].a = rand_double(a_min, a_max);                                                          //Semimajor axis
+            moons[i+j].e = rand_double(e_min, e_max);                                                          //Eccentricity
             moons[i+j].y = 0.0588 * sqrt( pow(moons[i+j].a, 3) / ((*moons[i+j].host).mass + moons[i+j].mass)); //Year length
-            moons[i+j].v = sqrt(star_ptr->mass / moons[i+j].a)*29.7827;                                      //Orbital velocity
-            moons[i+j].i = rand_double(i_min, i_max);                                                           //Inclination
-            moons[i+j].l = rand_double(0.0, 360.0);                                                             //LoAN
-            moons[i+j].p = rand_double(0.0, 360.0);                                                             //AoP
+            moons[i+j].v = sqrt(star_ptr->mass / moons[i+j].a)*29.7827;                                        //Orbital velocity
+            moons[i+j].i = rand_double(i_min, i_max);                                                          //Inclination
+            moons[i+j].l = rand_double(0.0, 360.0);                                                            //LoAN
+            moons[i+j].p = rand_double(0.0, 360.0);                                                            //AoP
 
             //The day length will have 1d2+1 digits
             die = (int)floor(rand_double(0,2));
@@ -583,6 +587,8 @@ void gasmn_orbit(struct Star *star_ptr, struct Planet *planet_ptr, double *orbit
 
         num_moons += members;
         i         += members;
+
+        print_log("\n");
     }
 
     //Transfer moons to planet's array
