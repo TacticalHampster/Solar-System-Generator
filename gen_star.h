@@ -48,7 +48,8 @@ void gen_star(struct Star *star_ptr)
     star_ptr->zone_frost    = sqrt(star_ptr->lumin)*4.85;
 
     //Gen photosphere
-    atmo_star(star_ptr);
+    star_ptr->photosphere = nullptr;
+    //atmo_star(star_ptr);
 }
 
 //Generates a photosphere

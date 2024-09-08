@@ -30,24 +30,23 @@
 #define COLOR_MOON_MINOR_R  0x07
 
 #define COLOR_ATMO_HYDROGEN 0x07
-#define COLOR_ATMO_ARGON    0x0D
+#define COLOR_ATMO_CARBON   0x08
 #define COLOR_ATMO_NITROGEN 0x09
 #define COLOR_ATMO_OXYGEN   0x0B
+#define COLOR_ATMO_WATER    0x01
 #define COLOR_ATMO_FLUORINE 0x0E
-#define COLOR_ATMO_CHLORINE 0x02
-#define COLOR_ATMO_BROMINE  0x06
-#define COLOR_ATMO_IODINE   0x05
 #define COLOR_ATMO_NEON     0x0C
+#define COLOR_ATMO_SILICON  0x06
+#define COLOR_ATMO_PHOSPHOR 0x04
+#define COLOR_ATMO_SULFUR   0x0E
+#define COLOR_ATMO_CHLORINE 0x02
+#define COLOR_ATMO_ARGON    0x0D
 #define COLOR_ATMO_KRYPTON  0x0F
 #define COLOR_ATMO_XENON    0x03
-#define COLOR_ATMO_PHOSPHOR 0x04
-#define COLOR_ATMO_WATER    0x01
-#define COLOR_ATMO_SULFUR   0x0E
-#define COLOR_ATMO_CARBON   0x08
-#define COLOR_ATMO_ALKALI   0x07
-#define COLOR_ATMO_THOLINS  0x08
-#define COLOR_ATMO_SILICON  0x06
-#define COLOR_ATMO_IRON     0x07
+#define COLOR_ATMO_BROMINE  0x04
+#define COLOR_ATMO_METAL    0x07
+
+#define COLOR_ATMO_IODINE   0x07
 
 #define rows 17
 
@@ -69,7 +68,8 @@ void print_moon_desc(struct Moon *moon_ptr);
 
 void print_units(void);
 void print_desc(void);
-void print_atmo_comps(void);
+void print_atmo_comps_1(void);
+void print_atmo_comps_2(void);
 void print_atmo_types(void);
 void print_orbit(void);
 void print_title(struct Star *star_ptr, struct Planet *planets, int num_planets);
@@ -435,7 +435,7 @@ void pop_options(struct Star *star_ptr, struct Planet *planets, int num_planets,
         else
             color_back = COLOR_DEFAULT_BACK;
         Set_Color(color_back + color_text);
-        printf(" Atmospheric Compounds  ");
+        printf(" Atmosph. Compounds I   ");
 
         Movetoxy(2, rows+8);
         color_text = COLOR_DEFAULT_TEXT;
@@ -444,7 +444,7 @@ void pop_options(struct Star *star_ptr, struct Planet *planets, int num_planets,
         else
             color_back = COLOR_DEFAULT_BACK;
         Set_Color(color_back + color_text);
-        printf(" Atmosphere Types       ");
+        printf(" Atmosph. Compounds II  ");
     }
     else if (planet_option == 1)
     {}
@@ -583,6 +583,12 @@ void print_star_props(struct Star *star_ptr)
     printf("╣");
 
     //Print photosphere info
+    if (star_ptr->photosphere == nullptr)
+    {
+        free((void*)text);
+        return;
+    }
+
     sprintf(text, "┼──────────────┬──────────────"
                 "\n│"
                 "\n│"
@@ -605,13 +611,13 @@ void print_star_props(struct Star *star_ptr)
         COLOR_ATMO_NITROGEN, //Nitrogen
         COLOR_ATMO_OXYGEN  , //Oxygen
         COLOR_ATMO_NEON    , //Neon
-        COLOR_ATMO_ALKALI  , //Sodium
-        COLOR_ATMO_ALKALI  , //Magnesium
+        COLOR_ATMO_METAL   , //Sodium
+        COLOR_ATMO_METAL   , //Magnesium
         COLOR_ATMO_SILICON , //Silicon
         COLOR_ATMO_PHOSPHOR, //Phosphorous
         COLOR_ATMO_SULFUR  , //Sulfur
         COLOR_ATMO_ARGON   , //Argon
-        COLOR_ATMO_IRON      //Iron
+        COLOR_ATMO_METAL     //Iron
     };
 
     char *atmo_names[] = {
@@ -744,7 +750,7 @@ void print_planet_props(struct Planet *planet_ptr)
                 "\n║  Radius       │ %8.3f %2s   "    "│              │               "   "│"
                 "\n║  Gravity      │ %8.3f G    "     "│              │               "   "│"
                 "\n║  Escape vel.  │ %8.3f km/s "     "│              │               "   "│"
-                "\n║  Temperature  │ %8.3f °C   "     "│              │               "   "│"
+                "\n║  Surf. temp.  │ %8.3f °C   "     "│              │               "   "│"
                 "\n║  Bond albedo  │ %8.3f %%    "    "│  Density     │  %6.3f g/cm³ "    "│"
                 "\n╟───────────────┴───────────────"  "┼──────────────┴───────────────"   "┤"
                 "\n║       Position Parameters     "  "│          Atmosphere          "   "│"
@@ -836,7 +842,7 @@ void print_planet_props(struct Planet *planet_ptr)
     //Print composition info
 
     int colors[5] = {
-        COLOR_ATMO_IRON    , //Metals
+        COLOR_ATMO_METAL   , //Metals
         COLOR_ATMO_SILICON , //Rock
         COLOR_ATMO_WATER   , //Water
         COLOR_ATMO_NITROGEN, //Ices
@@ -914,69 +920,138 @@ void print_planet_props(struct Planet *planet_ptr)
 
         print_at_xy(text, 59, 11);
 
-        int atmo_colors[24] = {
-            COLOR_ATMO_HYDROGEN, //Hydrogen
-            COLOR_ATMO_HYDROGEN, //Helium
-            COLOR_ATMO_ARGON   , //Argon
-            COLOR_ATMO_NITROGEN, //Nitrogen
-            COLOR_ATMO_OXYGEN  , //Oxygen
-            COLOR_ATMO_FLUORINE, //Fluorine
-            COLOR_ATMO_CHLORINE, //Chlorine
-            COLOR_ATMO_BROMINE , //Bromine
-            COLOR_ATMO_IODINE  , //Iodine
-            COLOR_ATMO_NEON    , //Neon
-            COLOR_ATMO_KRYPTON , //Krypton
-            COLOR_ATMO_XENON   , //Xenon
-            COLOR_ATMO_HYDROGEN, //Deuteride
-            COLOR_ATMO_CARBON  , //Methane
-            COLOR_ATMO_CARBON  , //Ethane
-            COLOR_ATMO_NITROGEN, //Ammonia
-            COLOR_ATMO_PHOSPHOR, //Phosphine
-            COLOR_ATMO_WATER   , //Water
-            COLOR_ATMO_SULFUR  , //Hydrogen sulfide
-            COLOR_ATMO_CARBON  , //Carbon oxides
-            COLOR_ATMO_SULFUR  , //Sulfur oxides
-            COLOR_ATMO_NITROGEN, //Nitrogen oxides
-            COLOR_ATMO_THOLINS , //Tholins
-            COLOR_ATMO_NITROGEN  //Cyanide
-        };
+        //Create the atmo_colors array
+        int atmo_colors[59];
 
-        char *atmo_names[] = {
-            "Hydrogen",
-            "Helium",
-            "Argon",
-            "Nitrogen",
-            "Oxygen",
-            "Fluorine",
-            "Chlorine",
-            "Bromine",
-            "Iodine",
-            "Neon",
-            "Krypton",
-            "Xenon",
-            "Deuteride",
-            "Methane",
-            "Ethane",
-            "Ammonia",
-            "Phosphine",
-            "Water",
-            "H-Sulfide",
-            "C-Oxides",
-            "S-Oxides",
-            "N-Oxides",
-            "Tholins",
-            "Cyanides"
-        };
+        atmo_colors[ID_HYDROGEN    ] = COLOR_ATMO_HYDROGEN;
+        atmo_colors[ID_DEUTERIDE   ] = COLOR_ATMO_HYDROGEN;
+        atmo_colors[ID_HELIUM      ] = COLOR_ATMO_HYDROGEN;
+        atmo_colors[ID_CARBON_MONOX] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_CARBON_DIOX ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_METHYLENE   ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_METHANE     ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_ACETYLENE   ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_ETHYLENE    ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_ETHANE      ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_PROPANE     ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_BUTADIYNE   ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_THOLINS     ] = COLOR_ATMO_CARBON  ;
+        atmo_colors[ID_CYANOGEN    ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_H_CYANIDE   ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_M_CYANIDE   ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_NITROGEN    ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_AMMONIA     ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_AZIC        ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_NITRIC      ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_NITRO_DIOX  ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_NITROUS     ] = COLOR_ATMO_NITROGEN;
+        atmo_colors[ID_OXYGEN      ] = COLOR_ATMO_OXYGEN  ;
+        atmo_colors[ID_WATER       ] = COLOR_ATMO_WATER   ;
+        atmo_colors[ID_PEROXIDE    ] = COLOR_ATMO_OXYGEN  ;
+        atmo_colors[ID_OZONE       ] = COLOR_ATMO_OXYGEN  ;
+        atmo_colors[ID_FLUORINE    ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_HYDRO_F     ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_BORON_F3    ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_BORON2_F4   ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_CARBON_F4   ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_SILICON_F4  ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_PHOSPH_F3   ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_PHOSPH_F5   ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_SULFUR_F4   ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_SULFUR_F6   ] = COLOR_ATMO_FLUORINE;
+        atmo_colors[ID_NEON        ] = COLOR_ATMO_NEON    ;
+        atmo_colors[ID_SILANE      ] = COLOR_ATMO_SILICON ;
+        atmo_colors[ID_PHOSPHINE   ] = COLOR_ATMO_PHOSPHOR;
+        atmo_colors[ID_HYDRO_S     ] = COLOR_ATMO_SULFUR  ;
+        atmo_colors[ID_SULFUR_DIOX ] = COLOR_ATMO_SULFUR  ;
+        atmo_colors[ID_SULFUR_TRIOX] = COLOR_ATMO_SULFUR  ;
+        atmo_colors[ID_CHLORINE    ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_HYDRO_CL    ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_BORON_CL3   ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_CHLOROFORM  ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_CARBON_CL4  ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_SILICON_CL4 ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_NITROGEN_CL3] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_PHOSPH_CL5  ] = COLOR_ATMO_CHLORINE;
+        atmo_colors[ID_ARGON       ] = COLOR_ATMO_ARGON   ;
+        atmo_colors[ID_BROMINE     ] = COLOR_ATMO_BROMINE ;
+        atmo_colors[ID_HYDRO_BR    ] = COLOR_ATMO_BROMINE ;
+        atmo_colors[ID_BORON_BR3   ] = COLOR_ATMO_BROMINE ;
+        atmo_colors[ID_SILICON_BR4 ] = COLOR_ATMO_BROMINE ;
+        atmo_colors[ID_PHOSPH_BR3  ] = COLOR_ATMO_BROMINE ;
+        atmo_colors[ID_ARSENIC_BR3 ] = COLOR_ATMO_BROMINE ;
+        atmo_colors[ID_KRYPTON     ] = COLOR_ATMO_KRYPTON ;
+        atmo_colors[ID_XENON       ] = COLOR_ATMO_XENON   ;
 
-        double atmosphere[24];
+        char *atmo_names[59];
+        atmo_names[ID_HYDROGEN    ] = "Hydrogen"  ;
+        atmo_names[ID_DEUTERIDE   ] = "Deuteride" ;
+        atmo_names[ID_HELIUM      ] = "Helium"    ;
+        atmo_names[ID_CARBON_MONOX] = "C. Oxide"  ;
+        atmo_names[ID_CARBON_DIOX ] = "C. Dioxide";
+        atmo_names[ID_METHYLENE   ] = "Methylene" ;
+        atmo_names[ID_METHANE     ] = "Methane"   ;
+        atmo_names[ID_ACETYLENE   ] = "Acetylene" ;
+        atmo_names[ID_ETHYLENE    ] = "Ethylene"  ;
+        atmo_names[ID_ETHANE      ] = "Ethane"    ;
+        atmo_names[ID_PROPANE     ] = "Propane"   ;
+        atmo_names[ID_BUTADIYNE   ] = "Butadiyne" ;
+        atmo_names[ID_THOLINS     ] = "Tholins"   ;
+        atmo_names[ID_CYANOGEN    ] = "Cyanogen"  ;
+        atmo_names[ID_H_CYANIDE   ] = "H. Cyanide";
+        atmo_names[ID_M_CYANIDE   ] = "M. Cyanide";
+        atmo_names[ID_NITROGEN    ] = "Nitrogen"  ;
+        atmo_names[ID_AMMONIA     ] = "Ammonia"   ;
+        atmo_names[ID_AZIC        ] = "Azic Acid" ;
+        atmo_names[ID_NITRIC      ] = "N. Oxide"  ;
+        atmo_names[ID_NITRO_DIOX  ] = "N. Dioxide";
+        atmo_names[ID_NITROUS     ] = "Nitrous"   ;
+        atmo_names[ID_OXYGEN      ] = "Oxygen"    ;
+        atmo_names[ID_WATER       ] = "Water"     ;
+        atmo_names[ID_PEROXIDE    ] = "Peroxide"  ;
+        atmo_names[ID_OZONE       ] = "Ozone"     ;
+        atmo_names[ID_FLUORINE    ] = "Fluorine"  ;
+        atmo_names[ID_HYDRO_F     ] = "Hydro. F"  ;
+        atmo_names[ID_BORON_F3    ] = "Boron F₃"  ;
+        atmo_names[ID_BORON2_F4   ] = "Diboron F₄ ";
+        atmo_names[ID_CARBON_F4   ] = "Carbon F₄  " ;
+        atmo_names[ID_SILICON_F4  ] = "Silicon F₄ ";
+        atmo_names[ID_PHOSPH_F3   ] = "Phosph. F₃ ";
+        atmo_names[ID_PHOSPH_F5   ] = "Phosph. F₅ ";
+        atmo_names[ID_SULFUR_F4   ] = "Sulfur F₄  " ;
+        atmo_names[ID_SULFUR_F6   ] = "Sulfur F₆  ";
+        atmo_names[ID_NEON        ] = "Neon"      ;
+        atmo_names[ID_SILANE      ] = "Silane"    ;
+        atmo_names[ID_PHOSPHINE   ] = "Phosphine" ;
+        atmo_names[ID_HYDRO_S     ] = "H. Sulfide";
+        atmo_names[ID_SULFUR_DIOX ] = "S. Dioxide";
+        atmo_names[ID_SULFUR_TRIOX] = "S. Triox." ;
+        atmo_names[ID_CHLORINE    ] = "Chlorine"  ;
+        atmo_names[ID_HYDRO_CL    ] = "Hydro. Cl";
+        atmo_names[ID_BORON_CL3   ] = "Boron Cl₃  " ;
+        atmo_names[ID_CHLOROFORM  ] = "Chloroform";
+        atmo_names[ID_CARBON_CL4  ] = "Carbon Tet";
+        atmo_names[ID_SILICON_CL4 ] = "Silic. Cl₄ ";
+        atmo_names[ID_NITROGEN_CL3] = "Nitro. Cl₃ ";
+        atmo_names[ID_PHOSPH_CL5  ] = "Phos. Cl₅  " ;
+        atmo_names[ID_ARGON       ] = "Argon"     ;
+        atmo_names[ID_BROMINE     ] = "Bromine"   ;
+        atmo_names[ID_HYDRO_BR    ] = "H. Bromine";
+        atmo_names[ID_BORON_BR3   ] = "Boron Br₃  " ;
+        atmo_names[ID_SILICON_BR4 ] = "Silic. Br₄ ";
+        atmo_names[ID_PHOSPH_BR3  ] = "Phos. Br₃  " ;
+        atmo_names[ID_ARSENIC_BR3 ] = "Arsen. Br₃ ";
+        atmo_names[ID_KRYPTON     ] = "Krypton"   ;
+        atmo_names[ID_XENON       ] = "Xenon"     ;
 
-        for (int i = 0; i < 24; i++)
+        double atmosphere[59];
+        for (int i = 0; i < 59; i++)
             atmosphere[i] = planet_ptr->atmosphere[i];
 
         //Sort the components in descending order
-        for (int i = 0; i < 23; i++)
+        for (int i = 0; i < 58; i++)
         {
-            for (int j = 0; j < 23-i; j++)
+            for (int j = 0; j < 58-i; j++)
             {
                 if (atmosphere[j] < atmosphere[j+1])
                 {
@@ -995,9 +1070,9 @@ void print_planet_props(struct Planet *planet_ptr)
             }
         }
 
+        //Determine unit
         for (int i = 0; i < 7; i++)
         {
-            //Determine unit
             if ((atmosphere[i])*1000000000000.0 < 1.0)
                 continue;
             else if ((atmosphere[i])*1000000000.0 < 1.0)
@@ -1214,7 +1289,7 @@ void print_belt_props(struct Planet *planet_ptr)
     //Print composition info
 
     int colors[4] = {
-        COLOR_ATMO_IRON    , //Metals
+        COLOR_ATMO_METAL   , //Metals
         COLOR_ATMO_SILICON , //Rock
         COLOR_ATMO_NITROGEN, //Ices
         COLOR_ATMO_CARBON    //Carbonous
@@ -1419,7 +1494,7 @@ void print_moon_props(struct Moon *moon_ptr)
     //Print composition info
 
     int colors[3] = {
-        COLOR_ATMO_IRON    , //Metals
+        COLOR_ATMO_METAL   , //Metals
         COLOR_ATMO_SILICON , //Rock
         COLOR_ATMO_NITROGEN  //Ices
     };
@@ -1705,11 +1780,11 @@ void print_planet_desc(struct Planet *planet_ptr)
         crash(-175);
     if (planet_ptr->atmo_dens == 0.0)
         sprintf(atmo, "no atmosphere");
-    else if (planet_ptr->atmosphere[0] > 0.5)
+    else if (planet_ptr->atmosphere[ID_HYDROGEN] > 0.5)
         sprintf(atmo, "a primordial atmosphere");
     else if (planet_ptr->type == TYPE_WTR_HYCN)
         sprintf(atmo, "a wet secondary (hycean) atmosphere");
-    else if (planet_ptr->atmosphere[19] > 0.5)
+    else if (planet_ptr->atmosphere[ID_CARBON_DIOX] > 0.5)
         sprintf(atmo, "a dry secondary atmosphere");
     else
         sprintf(atmo, "a bio-terraformed atmosphere");
@@ -2583,51 +2658,86 @@ void print_desc(void)
     );
 }
 
-//This function prints an explanation of the atmospheres.
-void print_atmo_comps(void)
+//This function prints an explanation of the substances in atmospheres.
+void print_atmo_comps_1(void)
 {
     Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
-    print_at_xy("Atmospheres in this program are composed of 23 different substances. Most of these "
-              "\nsubstances are pure elements or named chemical compounds, but some are abbreviated:"
-              "\n"
-              "\nN-OXIDES are primarily (~95%) nitric oxide (NO), with small quantities (~2.5%) of"
-              "\nnitrous oxide (N₂O) and nitrogen dioxide (NO₂)."
-              "\n"
-              "\nC-OXIDES are primarily (~99%) carbon dioxide (CO₂), with a small amount (~1%) of"
-              "\ncarbon monoxide (CO)."
-              "\n"
-              "\nS-OXIDES are primarily (~99%) sulfur dioxide (SO₂), with a small amount (~1%) of"
-              "\nsulfur trioxide (SO₃)."
-              "\n"
-              "\nH-SULFIDE is hydrogen sulfide (H₂S), DEUTERIDE is hydrogen deuteride (²H¹H), and"
-              "\nCYANIDE is hydrogen cyanide (HCN)."
-              "\n"
-              "\nTHOLINS are complex hydrocarbons and organic molecules formed by solar irradiation of"
-              "\nsimpler hydrocarbons. There is no single chemical formula for all tholins.",
-        30,
-        2
+    print_at_xy("╥────────────────────┬────────────┬─────────" "╥──────────────────────────┬────────────┬───────┐"
+              "\n║     Full Name      │   Abbrev.  │  Form.  " "║        Full Name         │   Abbrev.  │ Form. │"
+              "\n╟────────────────────┼────────────┼─────────" "╫──────────────────────────┼────────────┼───────┤"
+              "\n║ Hydrogen           │            │ H       " "║ Hydrogen azide           │ Azic Acid  │ HN₃   │"
+              "\n║ Hydrogen deuteride │ Deuteride  │ ¹H²H    " "║ Nitric oxide             │ N. Oxide   │ NO    │"
+              "\n║ Helium             │            │ He      " "║ Nitrogen dioxide         │ N. Dioxide │ NO₂   │"
+              "\n║ Carbon monoxide    │ C. Oxide   │ CO      " "║ Nitrous oxide            │ Nitrous    │ N₂O   │"
+              "\n║ Carbon dioxide     │ C. Dioxide │ CO₂     " "║ Oxygen                   │            │ O₂    │"
+              "\n║ Methylene          │            │ CH₂     " "║ Water                    │            │ H₂O   │"
+              "\n║ Methane            │            │ CH₄     " "║ Hydrogen peroxide        │ Peroxide   │ H₂O₂  │"
+              "\n║ Acetylene          │            │ C₂H₂    " "║ Ozone                    │            │ O₃    │"
+              "\n║ Ethylene           │            │ C₂H₄    " "║ Fluorine                 │            │ F₂    │"
+              "\n║ Ethane             │            │ C₂H₆    " "║ Hydrogen fluoride        │ Hydro. F   │ HF    │"
+              "\n║ Propane            │            │ C₃H₈    " "║ Boron trifluoride        │ Boron F₃   │ BF₃   │"
+              "\n║ Diacetylene        │ Butadiyne  │ C₄H₂    " "║ Diboron tetrafluoride    │ Diboron F₄ │ B₂F₄  │"
+              "\n║ Tholins            │            │ varies  " "║ Carbon tetrafluoride     │ Carbon F₄  │ CF₄   │"
+              "\n║ Cyanogen           │            │ (CN)₂   " "║ Silicon tetrafluoride    │ Silicon F₄ │ SiF₄  │"
+              "\n║ Hydrogen cyanide   │ H. Cyanide │ HCN     " "║ Phosphorus trifluoride   │ Phosph. F₃ │ PF₃   │"
+              "\n║ Acetonitrile       │ M. Cyanide │ CH₃CN   " "║ Phosphorus pentafluoride │ Phosph. F₅ │ PF₅   │"
+              "\n║ Nitrogen           │            │ N₂      " "║ Sulfur tetrafluoride     │ Sulfur F₄  │ SF₄   │"
+              "\n║ Ammonia            │            │ NH₃     " "║ Sulfur hexafluoride      │ Sulfur F₆  │ SF₆   │"
+              "\n╠════════════════════╧════════════╧═════════" "╩══════════════════════════╧════════════╧═══════╡",
+        27,
+        0
     );
 
-    Set_Color(COLOR_ATMO_NITROGEN);
-    print_at_xy("N-OXIDES", 30, 5);
+    Movetoxy(27, rows+1);
+    printf("╣");
 
-    Set_Color(COLOR_ATMO_CARBON);
-    print_at_xy("C-OXIDES", 30, 8);
+    print_at_xy_wrapped("This page lists the possible chemical substances that can appear in a planet's atmosphere. "
+                        "For substances that had to be abbreviated for space, the abbreviations are also listed. "
+                        "Substances containing elements heavier than fluorine are on the next page.",
+        30,
+        23,
+        87
+    );
+}
 
-    Set_Color(COLOR_ATMO_SULFUR);
-    print_at_xy("S-OXIDES", 30, 11);
+//This function prints an explanation of the substances in atmospheres.
+void print_atmo_comps_2(void)
+{
+    Set_Color(COLOR_DEFAULT_BACK + COLOR_DEFAULT_TEXT);
+    print_at_xy("╥──────────────────────────┬────────────┬───────" "╥──────────────────────┬────────────┬───────┐"
+              "\n║        Full Name         │   Abbrev.  │ Form. " "║      Full Name       │   Abbrev.  │ Form. │"
+              "\n╟──────────────────────────┼────────────┼───────" "╫──────────────────────┼────────────┼───────┤"
+              "\n║ Neon                     │            │ Ne    " "║ Silicon tetrabromide │ Silic. Br₄ │ SiBr₄ │"
+              "\n║ Silane                   │            │ SiH₄  " "║ Phosphorus tribromide│ Phos. Br₃  │ PBr₃  │"
+              "\n║ Phosphine                │            │ PH₃   " "║ Arsenic tribromide   │ Arsen. Br₃ │ AsBr₃ │"
+              "\n║ Hydrogen sulfide         │ H. Sulfide │ H₂S   " "║ Krypton              │            │ Kr    │"
+              "\n║ Sulfur dioxide           │ S. Dioxide │ SO₂   " "║ Xenon                │            │ Xe    │"
+              "\n║ Sulfur trioxide          │ S. Triox.  │ SO₃   " "║                      │            │       │"
+              "\n║ Chlorine                 │            │ Cl₂   " "║                      │            │       │"
+              "\n║ Hydrogen chloride        │ Hydro. Cl  │ HCl   " "║                      │            │       │"
+              "\n║ Boron trichloride        │ Boron Cl₃  │ BCl₃  " "║                      │            │       │"
+              "\n║ Chloroform               │            │ CHCl₃ " "║                      │            │       │"
+              "\n║ Carbon tetrachloride     │ Carbon Tet │ CCl₄  " "║                      │            │       │"
+              "\n║ Silicon tetrachloride    │ Silic. Cl₄ │ SiCl₄ " "║                      │            │       │"
+              "\n║ Nitrogen trichloride     │ Nitro. Cl₃ │ NCl₃  " "║                      │            │       │"
+              "\n║ Phosphorus pentachloride │ Phos. Cl₅  │ PCl₅  " "║                      │            │       │"
+              "\n║ Argon                    │            │ Ar    " "║                      │            │       │"
+              "\n║ Bromine                  │            │ Br₂   " "║                      │            │       │"
+              "\n║ Hydrogen bromide         │ H. Bromide │ HBr   " "║                      │            │       │"
+              "\n║ Boron tribromide         │ Boron Br₄  │ BBr₄  " "║                      │            │       │"
+              "\n╠══════════════════════════╧════════════╧═══════" "╩══════════════════════╧════════════╧═══════╡",
+        27,
+        0
+    );
 
-    Set_Color(COLOR_ATMO_SULFUR);
-    print_at_xy("H-SULFIDE", 30, 14);
+    Movetoxy(27, rows+1);
+    printf("╣");
 
-    Set_Color(COLOR_ATMO_HYDROGEN);
-    print_at_xy("DEUTERIDE", 67, 14);
-
-    Set_Color(COLOR_ATMO_NITROGEN);
-    print_at_xy("CYANIDE", 30, 15);
-
-    Set_Color(COLOR_ATMO_THOLINS);
-    print_at_xy("THOLINS", 30, 17);
+    print_at_xy_wrapped("This page continues from the previous page, listing substances with elements heavier than fluorine.",
+        30,
+        23,
+        87
+    );
 }
 
 //This functions prints a description of the types of atmospheres that can be generated.
@@ -2822,7 +2932,7 @@ void print_atmo_types(void)
     print_at_xy("Nitrogen oxides", 53, 19);
     Set_Color(COLOR_ATMO_NITROGEN);
     print_at_xy("Nitrogen oxides", 76, 19);
-    Set_Color(COLOR_ATMO_THOLINS);
+    Set_Color(COLOR_ATMO_CARBON);
     print_at_xy("Tholins", 99, 19);
 
     //Eleventh row

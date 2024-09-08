@@ -1,8 +1,10 @@
 // Math and unit constants
 #define GAS_CONST             8.3144598
-#define EARTH_RADIUS       6378
+#define EARTH_MASS            5.9722*pow(10, 24)
+#define EARTH_RADIUS       6378.0
 #define EARTH_YEAR          365.2515
 #define GRAVITY               9.80665
+#define GRAV_CONST            6.6743015*pow(10, -11)
 #define SUN_LUMIN             3.828*pow(10, 26)
 #define PARSEC           206266.3
 #define LIGHT_SPEED   299792458.0
@@ -236,33 +238,69 @@ struct Planet
     double atmo_high;      //Atmospheric scale height
 
     int    has_atmo;
+    int    is_super;
 
     double *atmosphere;
     /*
-     0    "Hydrogen"
-     1    "Helium"
-     2    "Argon"
-     3    "Nitrogen"
-     4    "Oxygen"
-     5    "Fluorine"
-     6    "Chlorine"
-     7    "Bromine"
-     8    "Iodine"
-     9    "Neon"
-    10    "Krypton"
-    11    "Xenon"
-    12    "Deuteride"
-    13    "Methane"
-    14    "Ethane"
-    15    "Ammonia"
-    16    "Phosphine"
-    17    "Water vapor"
-    18    "H-Sulfide"
-    19    "C-Oxides"
-    20    "S-Oxides"
-    21    "N-Oxides"
-    22    "Tholins"
-    23    "Cyanide"
+     0    Hyrogen
+     1    Hydrogen deuteride
+     2    Helium
+     3    Carbon monoxide
+     4    Carbon dioxide
+     5    Methylene
+     6    Methane
+     7    Acetylene
+     8    Ethylene
+     9    Ethane
+    10    Propane
+    11    Butadiyne
+    12    Tholins
+    13    Cyanogen
+    14    Hydrogen cyanide
+    15    Methyl cyanide
+    16    Nitrogen
+    17    Ammonia
+    18    Azic acid
+    19    Nitric oxide
+    20    Nitrogen dioxide
+    21    Nitrous oxide
+    22    Oxygen
+    23    Water
+    24    Hydrogen peroxide
+    25    Ozone
+    26    Fluorine
+    27    Hydrogen fluoride
+    28    Boron trifluoride
+    29    Diboron tetrafluoride
+    30    Carbon tetrafluoride
+    31    Silicon tetrafluoride
+    32    Phosphorus trifluoride
+    33    Phosphorus pentafluoride
+    34    Sulfur trifluoride
+    35    Sulfur hexafluoride
+    36    Neon
+    37    Silane
+    38    Phosphine
+    39    Hydrogen sulfide
+    40    Sulfur dioxide
+    41    Sulfur trioxide
+    42    Chlorine
+    43    Hydrogen chloride
+    44    Boron trichloride
+    45    Chloroform
+    46    Carbon tetrachloride
+    47    Silicon tetrachloride
+    48    Phosphorus trichloride
+    49    Phosphorus pentachloride
+    50    Argon
+    51    Bromine
+    52    Hydrogen bromide
+    53    Boron tribromide
+    54    Silicon tetrabromide
+    55    Phosphorus tribromide
+    56    Arsenic tribromide
+    57    Krypton
+    58    Xenon
     */
 };
 

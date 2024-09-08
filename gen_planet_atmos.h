@@ -4,438 +4,93 @@
 #include "defs.h"
 #include "utils.h"
 
+//The molar masses of various substances
+#define MASS_HYDROGEN   2.016
+
+//The id numbers of various substances
+#define ID_HYDROGEN      0
+#define ID_DEUTERIDE     1
+#define ID_HELIUM        2
+#define ID_CARBON_MONOX  3
+#define ID_CARBON_DIOX   4
+#define ID_METHYLENE     5
+#define ID_METHANE       6
+#define ID_ACETYLENE     7
+#define ID_ETHYLENE      8
+#define ID_ETHANE        9
+#define ID_PROPANE      10
+#define ID_BUTADIYNE    11
+#define ID_THOLINS      12
+#define ID_CYANOGEN     13
+#define ID_H_CYANIDE    14
+#define ID_M_CYANIDE    15
+#define ID_NITROGEN     16
+#define ID_AMMONIA      17
+#define ID_AZIC         18
+#define ID_NITRIC       19
+#define ID_NITRO_DIOX   20
+#define ID_NITROUS      21
+#define ID_OXYGEN       22
+#define ID_WATER        23
+#define ID_PEROXIDE     24
+#define ID_OZONE        25
+#define ID_FLUORINE     26
+#define ID_HYDRO_F      27
+#define ID_BORON_F3     28
+#define ID_BORON2_F4    29
+#define ID_CARBON_F4    30
+#define ID_SILICON_F4   31
+#define ID_PHOSPH_F3    32
+#define ID_PHOSPH_F5    33
+#define ID_SULFUR_F4    34
+#define ID_SULFUR_F6    35
+#define ID_NEON         36
+#define ID_SILANE       37
+#define ID_PHOSPHINE    38
+#define ID_HYDRO_S      39
+#define ID_SULFUR_DIOX  40
+#define ID_SULFUR_TRIOX 41
+#define ID_CHLORINE     42
+#define ID_HYDRO_CL     43
+#define ID_BORON_CL3    44
+#define ID_CHLOROFORM   45
+#define ID_CARBON_CL4   46
+#define ID_SILICON_CL4  47
+#define ID_NITROGEN_CL3 48
+#define ID_PHOSPH_CL5   49
+#define ID_ARGON        50
+#define ID_BROMINE      51
+#define ID_HYDRO_BR     52
+#define ID_BORON_BR3    53
+#define ID_SILICON_BR4  54
+#define ID_PHOSPH_BR3   55
+#define ID_ARSENIC_BR3  56
+#define ID_KRYPTON      57
+#define ID_XENON        58
+
 #ifndef ATMO_H
 #define ATMO_H
 
 void gen_planet_atmos(struct Star *star_ptr, struct Planet *planet_ptr);
 
+void pick_major_class(struct Planet *planet_ptr, double *remain);
+void pick_minor_class(struct Planet *planet_ptr, double *remain);
 void round_robin(double *comps, double *remain, int num, int names[]);
-char* get_comp_name(int num);
+void calc_atomic_weight(struct Planet *planet_ptr);
 void calc_albedo(struct Star *star_ptr, struct Planet *planet_ptr);
+char* get_comp_name(int num);
+
+void log_atmo_gen(struct Planet *planet_ptr, int id, double remain);
 
 //This is the top level function. It should be the only function called outside this file.
 void gen_planet_atmos(struct Star *star_ptr, struct Planet *planet_ptr)
 {
-    char logtext[100];
+    double remain = 1.0;
 
-    planet_ptr->has_atmo = true;
-    double remain  = 1.0;
-    double frac    = 0.0;
-    double density = 0.0;
-    double comps[11];
-
-    //Create atmo array
-    double *atmo = (double*)malloc(sizeof(double)*24);
-    if (atmo == nullptr)
-        crash(-130);
-
-    //Zero array
-    for (int i = 0; i < 24; i++)
-        atmo[i] = 0;
-
-    //Zero comps array
-    for (int i = 0; i < 11; i++)
-        comps[i] = 0;
-
-    /*
-     0    "Hydrogen"
-     1    "Helium"
-     2    "Argon"
-     3    "Nitrogen"
-     4    "Oxygen"
-     5    "Fluorine"
-     6    "Chlorine"
-     7    "Bromine"
-     8    "Iodine"
-     9    "Neon"
-    10    "Krypton"
-    11    "Xenon"
-    12    "Deuteride"
-    13    "Methane"
-    14    "Ethane"
-    15    "Ammonia"
-    16    "Phosphine"
-    17    "Water vapor"
-    18    "H-Sulfide"
-    19    "C-Oxides"
-    20    "S-Oxides"
-    21    "N-Oxides"
-    22    "Tholins"
-    23    "Cyanide"
-    */
-
+    //Determine if the planet will take an atmosphere
     switch (planet_ptr->type)
     {
         case TYPE_RCK_DENSE:
-        case TYPE_RCK_DESRT:
-
-            //Major components
-            print_log("      Generating major components:\n");
-
-            for (;;)
-            {
-                frac = fudge_double(0.0001);
-
-                //Nitrogen
-                atmo[3] = fudge_double(0.03-(0.03*FUDGE_FACTOR));
-                remain -= atmo[3];
-                sprintf(logtext, "         Generated %.15f nitrogen,         %.15f remaining\n", atmo[3], remain);
-                print_log(logtext);
-
-                //Argon
-                atmo[2] = rand_double(0.005, 0.02);
-                remain -= atmo[2];
-                sprintf(logtext, "         Generated %.15f argon,            %.15f remaining\n", atmo[3], remain);
-                print_log(logtext);
-
-                //Carbons
-                atmo[19] = remain-frac;
-                remain  -= atmo[19];
-                sprintf(logtext, "         Generated %.15f carbons,          %.15f remaining\n", atmo[19], remain);
-                print_log(logtext);
-
-                //Make sure remain is in an interesting range
-                if (!(0.0001 < remain && remain <= 0.0005))
-                {
-                    print_log("            Remainder is outside range, rerandomizing\n");
-
-                    //Reset
-                    atmo[ 3] = 0;
-                    atmo[ 2] = 0;
-                    atmo[19] = 0;
-                    remain = 1.0;
-                }
-                else
-                    break;
-            }
-
-            /*
-                Minor components
-                    Oxygen
-                    Fluorine
-                    Chlorine
-                    Bromine
-                    Iodine
-                    Neon
-                    Krypton
-                    Xenon
-                    Methane
-                    Ammonia
-                    Phosphine
-                    Hydrogen sulfide
-                    S-Oxides
-                    N-Oxides
-             */
-
-            sprintf(logtext, "      Attempting round robin for volcanic minor components:\n");
-            print_log(logtext);
-
-            int names_v[] = {6, 9, 4, 13, 15, 16, 18, 20, 21};
-            round_robin(comps, &remain, 9, names_v);
-
-            //Pick a halogen
-            frac = floor(rand_double(0.0, 7.0));
-            if (frac < 3.0)
-                atmo[6] = comps[0]; //Chlorine
-            else if (frac < 5.0)
-                atmo[5] = comps[0]; //Fluorine
-            else if (frac == 5.0)
-                atmo[7] = comps[0]; //Bromine
-            else
-                atmo[8] = comps[0]; //Iodine
-
-            //Pick a noble gas
-            frac = floor(rand_double(0.0, 5.0));
-            if (frac < 2.0)
-                atmo[ 9] = comps[1]; //Neon
-            else if (frac < 4.0)
-                atmo[10] = comps[1]; //Krypton
-            else
-                atmo[11] = comps[1]; //Xenon
-
-            atmo[ 4] = comps[2]; //Oxygen
-            atmo[13] = comps[3]; //Methane
-            atmo[15] = comps[4]; //Ammonia
-            atmo[16] = comps[5]; //Phosphine
-            atmo[18] = comps[6]; //Hydrogen sulfide
-            atmo[20] = comps[7]; //Sulfur oxides
-            atmo[21] = comps[8]; //Nitrogen oxides
-            break;
-
-        case TYPE_WTR_HYCN:
-
-            //Major components
-            print_log("      Generating major components:\n");
-
-            for (;;)
-            {
-                frac = fudge_double(0.0001);
-
-                //Water vapor
-                atmo[17] = fudge_double(0.03-(0.03*FUDGE_FACTOR));
-                remain  -= atmo[17];
-                sprintf(logtext, "         Generated %.15f water vapor,      %.15f remaining\n", atmo[17], remain);
-                print_log(logtext);
-
-                //Nitrogen
-                atmo[3] = fudge_double(0.03-(0.03*FUDGE_FACTOR));
-                remain -= atmo[3];
-                sprintf(logtext, "         Generated %.15f nitrogen,         %.15f remaining\n", atmo[3], remain);
-                print_log(logtext);
-
-                //Carbons
-                atmo[19] = remain-frac;
-                remain  -= atmo[19];
-                sprintf(logtext, "         Generated %.15f carbons,          %.15f remaining\n", atmo[19], remain);
-                print_log(logtext);
-
-                //Make sure remain is in an interesting range
-                if (!(0.0001 < remain && remain <= 0.0005))
-                {
-                    print_log("            Remainder is outside range, rerandomizing\n");
-
-                    //Reset
-                    atmo[17] = 0;
-                    atmo[ 3] = 0;
-                    atmo[19] = 0;
-                    remain = 1.0;
-                }
-                else
-                    break;
-            }
-
-            /*
-                Minor components
-                    Oxygen
-                    Fluorine
-                    Chlorine
-                    Bromine
-                    Iodine
-                    Argon
-                    Neon
-                    Krypton
-                    Xenon
-                    Methane
-                    Ammonia
-                    Phosphine
-                    Hydrogen sulfide
-                    S-Oxides
-                    N-Oxides
-             */
-
-            sprintf(logtext, "      Attempting round robin for hycean minor components:\n");
-            print_log(logtext);
-
-            int names_w[] = {6, 9, 2, 4, 13, 15, 16, 18, 20, 21};
-            round_robin(comps, &remain, 10, names_w);
-
-            //Pick a halogen
-            frac = floor(rand_double(0.0, 7.0));
-            if (frac < 3.0)
-                atmo[6] = comps[0]; //Chlorine
-            else if (frac < 5.0)
-                atmo[5] = comps[0]; //Fluorine
-            else if (frac == 5.0)
-                atmo[7] = comps[0]; //Bromine
-            else
-                atmo[8] = comps[0]; //Iodine
-
-            //Pick a noble gas
-            frac = floor(rand_double(0.0, 5.0));
-            if (frac < 2.0)
-                atmo[ 9] = comps[1]; //Neon
-            else if (frac < 4.0)
-                atmo[10] = comps[1]; //Krypton
-            else
-                atmo[11] = comps[1]; //Xenon
-
-            atmo[ 2] = comps[2]; //Argon
-            atmo[ 4] = comps[3]; //Oxygen
-            atmo[13] = comps[4]; //Methane
-            atmo[15] = comps[5]; //Ammonia
-            atmo[16] = comps[6]; //Phosphine
-            atmo[18] = comps[7]; //Hydrogen sulfide
-            atmo[20] = comps[8]; //Sulfur oxides
-            atmo[21] = comps[9]; //Nitrogen oxides
-            break;
-
-        case TYPE_RCK_GREEN:
-        case TYPE_WTR_GREEN:
-
-            //Major components
-            print_log("      Generating major components:\n");
-
-            for (;;)
-            {
-                frac = fudge_double(0.0005);
-
-                //Oxygen
-                atmo[4] = fudge_double((1.0/3.0)-((1.0/3.0)*FUDGE_FACTOR));
-                remain -= atmo[4];
-                sprintf(logtext, "         Generated %.15f oxygen,           %.15f remaining\n", atmo[4], remain);
-                print_log(logtext);
-
-                //Argon
-                atmo[2] = fudge_double(0.01);
-                remain -= atmo[2];
-                sprintf(logtext, "         Generated %.15f argon,            %.15f remaining\n", atmo[2], remain);
-                print_log(logtext);
-
-                //Nitros
-                atmo[3] = remain-frac;
-                remain -= atmo[3];
-                sprintf(logtext, "         Generated %.15f nitrogen,         %.15f remaining\n", atmo[3], remain);
-                print_log(logtext);
-
-                //Make sure remain is in an interesting range
-                if (!(0.0001 < remain && remain <= 0.0005))
-                {
-                    print_log("            Remainder is outside range, rerandomizing\n");
-
-                    //Reset
-                    atmo[4] = 0;
-                    atmo[2] = 0;
-                    atmo[3] = 0;
-                    remain = 1.0;
-                }
-                else
-                    break;
-            }
-
-            /*
-                Minor components
-                    Fluorine
-                    Chlorine
-                    Bromine
-                    Iodine
-                    Neon
-                    Krypton
-                    Xenon
-                    Methane
-                    Ammonia
-                    Phosphine
-                    Water vapor
-                    H-Sulfide
-                    C-Oxides
-                    S-Oxides
-                    N-Oxides
-             */
-
-            sprintf(logtext, "      Attempting round robin for green minor components:\n");
-            print_log(logtext);
-
-            int names_h[] = {6, 9, 13, 15, 16, 17, 18, 19, 20, 21};
-            round_robin(comps, &remain, 10, names_h);
-
-            //Pick a halogen
-            frac = floor(rand_double(0.0, 7.0));
-            if (frac < 3.0)
-                atmo[6] = comps[0]; //Chlorine
-            else if (frac < 5.0)
-                atmo[5] = comps[0]; //Fluorine
-            else if (frac == 5.0)
-                atmo[7] = comps[0]; //Bromine
-            else
-                atmo[8] = comps[0]; //Iodine
-
-            //Pick a noble gas
-            frac = floor(rand_double(0.0, 5.0));
-            if (frac < 2.0)
-                atmo[ 9] = comps[1]; //Neon
-            else if (frac < 4.0)
-                atmo[10] = comps[1]; //Krypton
-            else
-                atmo[11] = comps[1]; //Xenon
-
-            //Transfer other compounds
-            atmo[13] = comps[2]; //Methane
-            atmo[15] = comps[3]; //Ammonia
-            atmo[16] = comps[4]; //Phosphine
-            atmo[17] = comps[5]; //Water vapor
-            atmo[18] = comps[6]; //Hydrogen sulfide
-            atmo[19] = comps[7]; //Carbon oxides
-            atmo[20] = comps[8]; //Sulfur oxides
-            atmo[21] = comps[9]; //Nitrogen oxides
-            break;
-
-        case TYPE_GAS_GIANT:
-        case TYPE_GAS_SUPER:
-        case TYPE_GAS_PUFFY:
-        case TYPE_GAS_HOT:
-        case TYPE_ICE_DWARF:
-        case TYPE_ICE_GIANT:
-            //Major components
-            print_log("      Generating major components:\n");
-
-            for (;;)
-            {
-                //Hydrogen
-                atmo[0] = rand_double(0.85,0.91);
-                remain -= atmo[0];
-                sprintf(logtext, "         Generated %.15f hydrogen,         %.15f remaining\n", atmo[0], remain);
-                print_log(logtext);
-
-                //Helium
-                atmo[1] = remain*fudge_double(0.9);
-                remain -= atmo[1];
-                sprintf(logtext, "         Generated %.15f helium,           %.15f remaining\n", atmo[1], remain);
-                print_log(logtext);
-
-                //Methane
-                atmo[13] = remain*fudge_double(0.9);
-                remain -= atmo[13];
-                sprintf(logtext, "         Generated %.15f methane,          %.15f remaining\n", atmo[13], remain);
-                print_log(logtext);
-
-                //Make sure remain is in an interesting range
-                if (!(0.0001 < remain && remain <= 0.0005))
-                {
-                    print_log("            Remainder is outside range, rerandomizing\n");
-
-                    //Reset
-                    atmo[ 0] = 0;
-                    atmo[ 1] = 0;
-                    atmo[13] = 0;
-                    remain = 1.0;
-                }
-                else
-                    break;
-            }
-
-            /*
-                Minor components:
-                    Oxygen
-                    Neon
-                    Deuteride
-                    Ethane
-                    Ammonia
-                    Phosphine
-                    Water
-                    Hydrogen sulfide
-                    Sulfur oxides
-                    Tholins
-                    Cyanide
-            */
-
-            sprintf(logtext, "      Attempting round robin for primordial minor components:\n");
-            print_log(logtext);
-
-            int names_g[] = {4, 9, 12, 14, 15, 16, 17, 18, 19, 22, 23};
-            round_robin(comps, &remain, 11, names_g);
-
-            atmo[ 4] = comps[ 0]; //Oxygen
-            atmo[ 9] = comps[ 1]; //Neon
-            atmo[12] = comps[ 2]; //Deuteride
-            atmo[14] = comps[ 3]; //Ethane
-            atmo[15] = comps[ 4]; //Ammonia
-            atmo[16] = comps[ 5]; //Phosphine
-            atmo[17] = comps[ 6]; //Water
-            atmo[18] = comps[ 7]; //Hydrogen sulfide
-            atmo[19] = comps[ 8]; //Sulfur oxide
-            atmo[22] = comps[ 9]; //Tholins
-            atmo[23] = comps[10]; //Cyanide
-            break;
-
         case TYPE_BLT_INNER:
         case TYPE_BLT_KUIPR:
         case TYPE_DWF_PLNTSML:
@@ -447,162 +102,528 @@ void gen_planet_atmos(struct Star *star_ptr, struct Planet *planet_ptr)
             planet_ptr->has_atmo = false;
             break;
         default:
-            crash(-240);
+            planet_ptr->has_atmo = true;
     }
 
-    //Make sure all numbers are positive
-    if (remain < 0.0)
-    {
-        print_log("         Remainder is negative, rerandomizing\n");
-        free((void*)atmo);
-        gen_planet_atmos(star_ptr, planet_ptr);
-    }
+    //Albedo doesn't require knowledge of atmo composition, so we can do it right away
+    calc_albedo(star_ptr, planet_ptr);
+
+    //If the planet needs no atmosphere, we're done
+    if (!planet_ptr->has_atmo)
+        return;
+
+    //Otherwise, start by creating the atmosphere array
+    double *atmo = (double*)malloc(sizeof(double)*60);
+    if (atmo == nullptr)
+        crash(-130);
+
+    //Zero array
+    for (int i = 0; i < 60; i++)
+        atmo[i] = 0;
 
     //Transfer
     planet_ptr->atmosphere = atmo;
 
-    frac = 0;
+    print_log("      Generating major components:\n");
+    pick_major_class(planet_ptr, &remain);
 
-    //Create detailed atmo array for density and mol weight calculations
-    atmo = (double*)malloc(sizeof(double)*28);
-    if (atmo == nullptr)
-        crash(-131);
+    print_log("      Generating minor components:\n");
+    pick_minor_class(planet_ptr, &remain);
 
-    //Atomic weights
-    double weights[28] = {
-        0.00201588,  //Hydrogen
-        0.0040026,   //Helium
-        0.039948,    //Argon
-        0.0280134,   //Nitrogen
-        0.031988,    //Oxygen
-        0.0379968,   //Fluorine
-        0.0709056,   //Chlorine
-        0.159808,    //Bromine
-        0.2538089,   //Iodine
-        0.0201797,   //Neon
-        0.083798,    //Krypton
-        0.131293,    //Xenon
-        0.00302204,  //Deuteride
-        0.01604,     //Methane
-        0.03006904,  //Ethane
-        0.017031,    //Ammonia
-        0.033997581, //Phosphine
-        0.01801528,  //Water
-        0.03408,     //Hydrogen sulfide
-        0.02801,     //CO
-        0.04401,     //CO2
-        0.064066,    //S02
-        0.080066,    //S03
-        0.03001,     //NO
-        0.0460055,   //NO2
-        0.044013,    //N2O
-        rand_double(0.01, 0.2), //Tholins
-        0.0270253    //Cyanide
-    };
+    //Adjust certain minor components, for realism's sake
+    double temp;
+    if (planet_ptr->atmosphere[ID_OZONE] > planet_ptr->atmosphere[ID_OXYGEN])
+    {
+        temp                              = planet_ptr->atmosphere[ID_OZONE];
+        planet_ptr->atmosphere[ID_OZONE]  = planet_ptr->atmosphere[ID_OXYGEN];
+        planet_ptr->atmosphere[ID_OXYGEN] = temp;
+    }
+    if (planet_ptr->atmosphere[ID_SULFUR_TRIOX] > planet_ptr->atmosphere[ID_SULFUR_DIOX])
+    {
+        temp                                    = planet_ptr->atmosphere[ID_SULFUR_DIOX];
+        planet_ptr->atmosphere[ID_SULFUR_DIOX]  = planet_ptr->atmosphere[ID_SULFUR_TRIOX];
+        planet_ptr->atmosphere[ID_SULFUR_TRIOX] = temp;
+    }
 
-    /*
-     0    "Hydrogen"
-     1    "Helium"
-     2    "Argon"
-     3    "Nitrogen"
-     4    "Oxygen"
-     5    "Fluorine"
-     6    "Chlorine"
-     7    "Bromine"
-     8    "Iodine"
-     9    "Neon"
-    10    "Krypton"
-    11    "Xenon"
-    12    "Deuteride"
-    13    "Methane"
-    14    "Ethane"
-    15    "Ammonia"
-    16    "Phosphine"
-    17    "Water vapor"
-    18    "H-Sulfide"
-    19    "C-Oxides"
-    20    "S-Oxides"
-    21    "N-Oxides"
-    22    "Other gases"
-    */
-
-    calc_albedo(star_ptr, planet_ptr);
+    if (planet_ptr->atmosphere[ID_SILANE] > planet_ptr->atmosphere[ID_HYDRO_CL])
+    {
+        temp                                = planet_ptr->atmosphere[ID_SILANE];
+        planet_ptr->atmosphere[ID_SILANE]   = planet_ptr->atmosphere[ID_HYDRO_CL];
+        planet_ptr->atmosphere[ID_HYDRO_CL] = temp;
+    }
 
     print_log("      Calculating atomic weight:\n");
+    calc_atomic_weight(planet_ptr);
+}
 
-    //Make sure there is an atmosphere
-    if (planet_ptr->has_atmo)
+//This function determines the major components of the atmosphere that take up the 99%.
+void pick_major_class(struct Planet *planet_ptr, double *remain)
+{
+    char logtext[100];
+
+    //Determine if the planet's gravity can retain hydrogen
+    double hydrogen_rms = sqrt((3.0 * GAS_CONST * ((planet_ptr->surf_temp + KELVIN)) * 1500.0) / 0.00201588);
+    double hydrogen_lim = planet_ptr->esc_v/6.0;
+    int is_super = (hydrogen_rms < hydrogen_lim);
+
+    if (is_super)
+        sprintf(logtext, "         Planet is able to retain hydrogen (rms = %f, lim = %f, div = %f)\n", hydrogen_rms, hydrogen_lim, (hydrogen_rms / hydrogen_lim));
+    else
+        sprintf(logtext, "         Planet is not able to retain hydrogen (rms = %f, lim = %f, div = %f)\n", hydrogen_rms, hydrogen_lim, (hydrogen_rms / hydrogen_lim));
+    print_log(logtext);
+
+    double frac = fudge_double(0.0001);
+
+    for (;;)
     {
-        for (int i = 0; i < 19; i++)
+        if ((planet_ptr->type == TYPE_RCK_DESRT) && (hydrogen_rms < hydrogen_lim)) //Planet is super-terrestrial
         {
-            atmo[i] = planet_ptr->atmosphere[i];
+            //Hydrogen
+            planet_ptr->atmosphere[ID_HYDROGEN] = rand_double(0.85,0.91);
+            *remain -= planet_ptr->atmosphere[ID_HYDROGEN];
+            log_atmo_gen(planet_ptr, ID_HYDROGEN, *remain);
+
+            //Helium
+            planet_ptr->atmosphere[ID_HELIUM] = (*remain)*fudge_double(ATMO_DECAY);
+            *remain -= planet_ptr->atmosphere[ID_HELIUM];
+            log_atmo_gen(planet_ptr, ID_HELIUM, *remain);
+
+            //Argon
+            planet_ptr->atmosphere[ID_ARGON] = rand_double(0.005, 0.02);
+            *remain -= planet_ptr->atmosphere[ID_ARGON];
+            log_atmo_gen(planet_ptr, ID_ARGON, *remain);
+        }
+        else if ((planet_ptr->type == TYPE_RCK_DESRT) && (hydrogen_rms >= hydrogen_lim)) //Planet is a regular terrestrial
+        {
+            //Nitrogen
+            planet_ptr->atmosphere[ID_NITROGEN] = fudge_double(0.03);
+            *remain -= planet_ptr->atmosphere[ID_NITROGEN];
+            log_atmo_gen(planet_ptr, ID_NITROGEN, *remain);
+
+            //Argon
+            planet_ptr->atmosphere[ID_ARGON] = rand_double(0.005, 0.02);
+            *remain -= planet_ptr->atmosphere[ID_ARGON];
+            log_atmo_gen(planet_ptr, ID_ARGON, *remain);
+
+            //Carbon dioxide
+            planet_ptr->atmosphere[ID_CARBON_DIOX] = (*remain)-frac;
+            *remain  -= planet_ptr->atmosphere[ID_CARBON_DIOX];
+            log_atmo_gen(planet_ptr, ID_CARBON_DIOX, *remain);
+        }
+        else if ((planet_ptr->type == TYPE_WTR_HYCN) && (hydrogen_rms < hydrogen_lim)) //Planet is a super-ocean (hycean)
+        {
+            //Hydrogen
+            planet_ptr->atmosphere[ID_HYDROGEN] = rand_double(0.85,0.91);
+            *remain -= planet_ptr->atmosphere[ID_HYDROGEN];
+            log_atmo_gen(planet_ptr, ID_HYDROGEN, *remain);
+
+            //Helium
+            planet_ptr->atmosphere[ID_HELIUM] = (*remain)*fudge_double(ATMO_DECAY);
+            *remain -= planet_ptr->atmosphere[ID_HELIUM];
+            log_atmo_gen(planet_ptr, ID_HELIUM, *remain);
+
+            //Water
+            planet_ptr->atmosphere[ID_WATER] = rand_double(0.005, 0.02);
+            *remain -= planet_ptr->atmosphere[ID_WATER];
+            log_atmo_gen(planet_ptr, ID_WATER, *remain);
+        }
+        else if ((planet_ptr->type == TYPE_WTR_HYCN) && (hydrogen_rms >= hydrogen_lim)) //Planet is a regular ocean
+        {
+            //Nitrogen
+            planet_ptr->atmosphere[ID_NITROGEN] = fudge_double(0.03);
+            *remain -= planet_ptr->atmosphere[ID_NITROGEN];
+            log_atmo_gen(planet_ptr, ID_NITROGEN, *remain);
+
+            //Water
+            planet_ptr->atmosphere[ID_WATER] = rand_double(0.005, 0.02);
+            *remain -= planet_ptr->atmosphere[ID_WATER];
+            log_atmo_gen(planet_ptr, ID_WATER, *remain);
+
+            //Carbon dioxide
+            planet_ptr->atmosphere[ID_CARBON_DIOX] = (*remain)-frac;
+            *remain  -= planet_ptr->atmosphere[ID_CARBON_DIOX];
+            log_atmo_gen(planet_ptr, ID_CARBON_DIOX, *remain);
+        }
+        else if (planet_ptr->type == TYPE_RCK_GREEN || planet_ptr->type == TYPE_WTR_GREEN) //Planet is habitable
+        {
+            //Oxygen
+            planet_ptr->atmosphere[ID_OXYGEN] = fudge_double((1.0/3.0)-((1.0/3.0)*FUDGE_FACTOR));
+            *remain -= planet_ptr->atmosphere[ID_OXYGEN];
+            log_atmo_gen(planet_ptr, ID_OXYGEN, *remain);
+
+            //Argon
+            planet_ptr->atmosphere[ID_ARGON] = fudge_double(0.01);
+            *remain -= planet_ptr->atmosphere[ID_ARGON];
+            log_atmo_gen(planet_ptr, ID_ARGON, *remain);
+
+            //Nitros
+            planet_ptr->atmosphere[ID_NITROGEN] = (*remain)-frac;
+            *remain -= planet_ptr->atmosphere[ID_NITROGEN];
+            log_atmo_gen(planet_ptr, ID_NITROGEN, *remain);
+
+        }
+        else if (planet_ptr->type == TYPE_GAS_GIANT ||
+                 planet_ptr->type == TYPE_GAS_SUPER ||
+                 planet_ptr->type == TYPE_GAS_PUFFY ||
+                 planet_ptr->type == TYPE_GAS_HOT   ||
+                 planet_ptr->type == TYPE_ICE_DWARF ||
+                 planet_ptr->type == TYPE_ICE_GIANT  ) //Planet is a giant
+        {
+            //Hydrogen
+            planet_ptr->atmosphere[ID_HYDROGEN] = rand_double(0.85,0.91);
+            *remain -= planet_ptr->atmosphere[ID_HYDROGEN];
+            log_atmo_gen(planet_ptr, ID_HYDROGEN, *remain);
+
+            //Helium
+            planet_ptr->atmosphere[ID_HELIUM] = (*remain)*fudge_double(ATMO_DECAY);
+            *remain -= planet_ptr->atmosphere[ID_HELIUM];
+            log_atmo_gen(planet_ptr, ID_HELIUM, *remain);
+
+            //Methane
+            planet_ptr->atmosphere[ID_METHANE] = rand_double(0.005, 0.02);
+            *remain -= planet_ptr->atmosphere[ID_METHANE];
+            log_atmo_gen(planet_ptr, ID_METHANE, *remain);
         }
 
-        sprintf(logtext, "         Transferred simple compounds\n");
-        print_log(logtext);
-
-        //Carbons
-        frac = fudge_double(0.99);
-        atmo[20] = planet_ptr->atmosphere[19]*(frac > 1.0 ? 1.0 : frac);     //Carbon monoxide    CO
-        atmo[19] = planet_ptr->atmosphere[19]-atmo[20]                 ;     //Carbon dioxide     CO2
-
-        sprintf(logtext, "         Calculated carbon oxides\n");
-        print_log(logtext);
-
-        //Sulfurs
-        frac = fudge_double(0.99);
-        atmo[21] = planet_ptr->atmosphere[20]*(frac > 1.0 ? 1.0 : frac);     //Sulfur dioxide     SO2
-        atmo[22] = planet_ptr->atmosphere[20]-atmo[21]                 ;     //Sulfur trioxide    SO3
-
-        sprintf(logtext, "         Calculated sulfur oxides\n");
-        print_log(logtext);
-
-        //Nitros
-        frac = fudge_double(0.95);
-        atmo[23] =  planet_ptr->atmosphere[21]*(frac > 1.0 ? 1.0 : frac)  ; //Nitric oxide       NO
-        atmo[24] = (planet_ptr->atmosphere[21]-atmo[23])*fudge_double(0.5); //Nitrogen dioxide   NO2
-        atmo[25] = (planet_ptr->atmosphere[21]-atmo[23]-atmo[24])         ; //Nitrous oxide      N20
-
-        sprintf(logtext, "         Calculated nitrogen oxides\n");
-        print_log(logtext);
-
-        //Tholins
-        atmo[26] = planet_ptr->atmosphere[22];
-
-        //Cyanide
-        atmo[27] = planet_ptr->atmosphere[23];
-
-        //Calculate average atomic weight
-        planet_ptr->atmo_dens = 0.0;
-        for (int i = 0; i < 28; i++)
+        //Make sure remain is in an interesting range
+        if (!(0.0001 < (*remain) && (*remain) <= 0.0005))
         {
-            density += (atmo[i]) * (weights[i]);
+            print_log("            Remainder is outside range, rerandomizing\n");
+
+            //Reset
+            for (int i = 0; i < 60; i++)
+                planet_ptr->atmosphere[i] = 0;
+            (*remain) = 1.0;
+            frac   = fudge_double(0.0001);
         }
-
-        density *= 10;
-
-        sprintf(logtext, "         Average atomic weight: %f kg/mol\n", density);
-        print_log(logtext);
-
-        if (density > 0.0)
-        {
-            planet_ptr->atmo_pres = rand_double(0.0, 100.0);
-
-            planet_ptr->atmo_dens = (planet_ptr->atmo_pres * 101325 * density) / (planet_ptr->surf_temp * GAS_CONST);
-
-            planet_ptr->atmo_high = (planet_ptr->surf_temp * GAS_CONST) / (planet_ptr->surf_grav * GRAVITY * density);
-
-            if (planet_ptr->type == TYPE_GAS_GIANT ||
-                planet_ptr->type == TYPE_GAS_SUPER ||
-                planet_ptr->type == TYPE_GAS_PUFFY ||
-                planet_ptr->type == TYPE_GAS_HOT   ||
-                planet_ptr->type == TYPE_ICE_DWARF ||
-                planet_ptr->type == TYPE_ICE_GIANT  )
-            {
-                planet_ptr->atmo_high = (planet_ptr->atmo_high * 10.0) + fudge_double(20000.0);
-            }
-        }
+        else
+            break;
     }
+
+    planet_ptr->is_super = is_super;
+}
+
+//This function determines the minor components of the atmosphere that make up the ppm and ppb range.
+void pick_minor_class(struct Planet *planet_ptr, double *remain)
+{
+    //Organic, Nitrogenous, Volcanic, Oxygenated, Halogenated
+    int allowed[5];
+    int minor_class;
+    int comps[10];
+    char logtext[100];
+
+    //Determine which minor classes are allowed based on planet type
+    switch (planet_ptr->type)
+    {
+        case TYPE_RCK_DESRT:
+        case TYPE_RCK_GREEN:
+            allowed[0] = true;
+            allowed[1] = true;
+            allowed[2] = true;
+            allowed[3] = true;
+            allowed[4] = true;
+            break;
+        case TYPE_WTR_HYCN:
+        case TYPE_WTR_GREEN:
+            allowed[0] = true;
+            allowed[1] = true;
+            allowed[2] = true;
+            allowed[3] = true;
+            allowed[4] = false;
+            break;
+        case TYPE_GAS_GIANT:
+        case TYPE_GAS_SUPER:
+        case TYPE_GAS_PUFFY:
+        case TYPE_GAS_HOT:
+        case TYPE_ICE_DWARF:
+        case TYPE_ICE_GIANT:
+            allowed[0] = true;
+            allowed[1] = false;
+            allowed[2] = false;
+            allowed[3] = false;
+            allowed[4] = false;
+            break;
+        case TYPE_RCK_DENSE:
+        case TYPE_BLT_INNER:
+        case TYPE_BLT_KUIPR:
+        case TYPE_DWF_PLNTSML:
+        case TYPE_DWF_PLUTINO:
+        case TYPE_DWF_CUBEWNO:
+        case TYPE_DWF_TWOTINO:
+        case TYPE_DWF_SCATTER:
+        case TYPE_DWF_SEDNOID:
+            return;
+        default:
+            crash(-240);
+    }
+
+    //Randomly pick one allowed minor class
+    minor_class = -1;
+    do
+    {
+        minor_class = round(rand_double(0.0, 4.0));
+        sprintf(
+            logtext,
+            "         Picked minor class %i, allowed: %s\n",
+            minor_class,
+            (
+                allowed[minor_class]
+                ? "true"
+                : "false"
+            )
+        );
+        print_log(logtext);
+    }
+    while ((!allowed[minor_class]) && (minor_class != -1));
+
+    //Determine minor components based on class
+    int random_gas, random_gas2, d3;
+    switch (planet_ptr->type)
+    {
+        case TYPE_RCK_DESRT:
+        case TYPE_RCK_GREEN:
+            random_gas = round(rand_double(0.0, 2.0));
+            random_gas = (
+                            random_gas == 0
+                            ? ID_NEON
+                            : (
+                                random_gas == 1
+                                ? ID_KRYPTON
+                                : ID_XENON
+                            )
+                         );
+
+            random_gas2 = round(rand_double(0.0, 2.0));
+            random_gas2 = (
+                             random_gas2 == 0
+                             ? ID_NEON
+                             : (
+                                 random_gas2 == 1
+                                 ? ID_KRYPTON
+                                 : ID_XENON
+                             )
+                          );
+
+            switch (minor_class)
+            {
+                case 0: //Organic
+                    comps[0] = random_gas     ;
+                    comps[1] = ID_CARBON_MONOX;
+                    comps[2] = ID_METHANE     ;
+                    comps[3] = ID_ETHANE      ;
+                    comps[4] = ID_METHYLENE   ;
+                    comps[5] = ID_ETHYLENE    ;
+                    comps[6] = ID_ACETYLENE   ;
+                    comps[7] = ID_PHOSPHINE   ;
+                    comps[8] = ID_OZONE       ;
+                    comps[9] = ID_OXYGEN      ;
+                    break;
+
+                case 1: //Nitrogenated
+                    comps[0] = random_gas   ;
+                    comps[1] = ID_NITRIC    ;
+                    comps[2] = ID_NITROUS   ;
+                    comps[3] = ID_NITRO_DIOX;
+                    comps[4] = ID_AMMONIA   ;
+                    comps[5] = ID_CYANOGEN  ;
+                    comps[6] = ID_M_CYANIDE ;
+                    comps[7] = ID_AZIC      ;
+                    comps[8] = ID_H_CYANIDE ;
+                    comps[9] = (planet_ptr->atmosphere[ID_CARBON_DIOX] > 0.0 ? ID_CARBON_MONOX : ID_CARBON_DIOX);
+                    break;
+
+                case 2: //Volcanic
+                    comps[0] = random_gas     ;
+                    comps[1] = ID_SULFUR_DIOX ;
+                    comps[2] = ID_SULFUR_TRIOX;
+                    comps[3] = ID_SULFUR_F6   ;
+                    comps[4] = ID_OXYGEN      ;
+                    comps[5] = ID_CARBON_MONOX;
+                    comps[6] = ID_HYDRO_S     ;
+                    comps[7] = ID_HYDRO_F     ;
+                    comps[8] = ID_HYDRO_CL    ;
+                    comps[9] = ID_METHANE     ;
+                    break;
+
+                case 3: //Oxygenated
+                    comps[0] = random_gas     ;
+                    comps[1] = ID_OXYGEN      ;
+                    comps[2] = ID_OZONE       ;
+                    comps[3] = (planet_ptr->atmosphere[ID_WATER] > 0.0 ? ID_PEROXIDE : ID_WATER);
+                    comps[4] = ID_NITRIC      ;
+                    comps[5] = ID_NITROUS     ;
+                    comps[6] = ID_NITRO_DIOX  ;
+                    comps[7] = ID_SULFUR_DIOX ;
+                    comps[8] = ID_SULFUR_TRIOX;
+                    comps[9] = (planet_ptr->atmosphere[ID_CARBON_DIOX] > 0.0 ? ID_CARBON_MONOX : ID_CARBON_DIOX);
+                    break;
+
+                case 4: //Halogenated
+                    d3 = floor(rand_double(0.0, 3.0)); //Choose which halogen
+                    switch (d3)
+                    {
+                        case 0: //Fluorine
+                            comps[0] = random_gas   ;
+                            comps[1] = ID_FLUORINE  ;
+                            comps[2] = ID_HYDRO_F   ;
+                            comps[3] = ID_CARBON_F4 ;
+                            comps[4] = ID_BORON_F3  ;
+                            comps[5] = ID_BORON2_F4 ;
+                            comps[6] = ID_SILICON_F4;
+                            comps[7] = ID_PHOSPH_F5 ;
+                            comps[8] = ID_SULFUR_F4 ;
+                            comps[9] = ID_SULFUR_F6 ;
+                            break;
+
+                        case 1: //Chlorine
+                            comps[0] = random_gas     ;
+                            comps[1] = ID_CHLORINE    ;
+                            comps[2] = ID_HYDRO_CL    ;
+                            comps[3] = ID_CARBON_CL4  ;
+                            comps[4] = ID_BORON_CL3   ;
+                            comps[5] = ID_CHLOROFORM  ;
+                            comps[6] = ID_SILICON_CL4 ;
+                            comps[7] = ID_PHOSPH_CL5  ;
+                            comps[8] = ID_NITROGEN_CL3;
+                            comps[9] = ID_SILANE      ;
+                            break;
+
+                        case 2: //Bromine
+                        case 3:
+                            comps[0] = random_gas    ;
+                            comps[1] = random_gas2   ;
+                            comps[2] = ID_BROMINE    ;
+                            comps[3] = ID_HYDRO_BR   ;
+                            comps[4] = ID_BORON_BR3  ;
+                            comps[5] = ID_PHOSPH_BR3 ;
+                            comps[6] = ID_SILICON_BR4;
+                            comps[7] = ID_ARSENIC_BR3;
+                            comps[8] = ID_HYDRO_F    ;
+                            comps[9] = ID_HYDRO_CL   ;
+                            break;
+                    }
+
+            }
+            break;
+
+        case TYPE_WTR_HYCN:
+        case TYPE_WTR_GREEN:
+            random_gas = round(rand_double(0.0, 2.0));
+            random_gas = (
+                            random_gas == 0
+                            ? ID_NEON
+                            : (
+                                random_gas == 1
+                                ? ID_KRYPTON
+                                : ID_XENON
+                            )
+                         );
+
+            switch (minor_class)
+            {
+                case 0: //Organic
+                    comps[0] = random_gas     ;
+                    comps[1] = ID_CARBON_MONOX;
+                    comps[2] = ID_METHANE     ;
+                    comps[3] = ID_ETHANE      ;
+                    comps[4] = ID_METHYLENE   ;
+                    comps[5] = ID_ETHYLENE    ;
+                    comps[6] = ID_ACETYLENE   ;
+                    comps[7] = ID_PHOSPHINE   ;
+                    comps[8] = ID_OZONE       ;
+                    comps[9] = ID_OXYGEN      ;
+                    break;
+
+                case 1: //Nitrogenated
+                    comps[0] = random_gas   ;
+                    comps[1] = ID_NITRIC    ;
+                    comps[2] = ID_NITROUS   ;
+                    comps[3] = ID_NITRO_DIOX;
+                    comps[4] = ID_AMMONIA   ;
+                    comps[5] = ID_CYANOGEN  ;
+                    comps[6] = ID_M_CYANIDE ;
+                    comps[7] = ID_AZIC      ;
+                    comps[8] = ID_H_CYANIDE ;
+                    comps[9] = (planet_ptr->atmosphere[ID_CARBON_DIOX] > 0.0 ? ID_CARBON_MONOX : ID_CARBON_DIOX);
+                    break;
+
+                case 2: //Volcanic
+                    comps[0] = random_gas     ;
+                    comps[1] = ID_SULFUR_DIOX ;
+                    comps[2] = ID_SULFUR_TRIOX;
+                    comps[3] = ID_SULFUR_F6   ;
+                    comps[4] = ID_OXYGEN      ;
+                    comps[5] = ID_CARBON_MONOX;
+                    comps[6] = ID_HYDRO_S     ;
+                    comps[7] = ID_HYDRO_F     ;
+                    comps[8] = ID_HYDRO_CL    ;
+                    comps[9] = ID_METHANE     ;
+                    break;
+
+                case 3: //Oxygenated
+                    comps[0] = random_gas     ;
+                    comps[1] = ID_OXYGEN      ;
+                    comps[2] = ID_OZONE       ;
+                    comps[3] = (planet_ptr->atmosphere[ID_WATER] > 0.0 ? ID_PEROXIDE : ID_WATER);
+                    comps[4] = ID_NITRIC      ;
+                    comps[5] = ID_NITROUS     ;
+                    comps[6] = ID_NITRO_DIOX  ;
+                    comps[7] = ID_SULFUR_DIOX ;
+                    comps[8] = ID_SULFUR_TRIOX;
+                    comps[9] = (planet_ptr->atmosphere[ID_CARBON_DIOX] > 0.0 ? ID_CARBON_MONOX : ID_CARBON_DIOX);
+                    break;
+            }
+            break;
+
+        case TYPE_GAS_GIANT:
+        case TYPE_GAS_SUPER:
+        case TYPE_GAS_PUFFY:
+        case TYPE_GAS_HOT:
+        case TYPE_ICE_DWARF:
+        case TYPE_ICE_GIANT:
+            random_gas = round(rand_double(0.0, 1.0));
+            random_gas = (
+                            random_gas == 0
+                            ? ID_ARGON
+                            : ID_NEON
+                         );
+
+            comps[0] = random_gas     ;
+            comps[1] = ID_WATER       ;
+            comps[2] = ID_ETHANE      ;
+            comps[3] = ID_HYDRO_S     ;
+            comps[4] = ID_DEUTERIDE   ;
+            comps[5] = ID_H_CYANIDE   ;
+            comps[6] = ID_AMMONIA     ;
+            comps[7] = ID_PHOSPHINE   ;
+            comps[8] = ID_CARBON_MONOX;
+            comps[9] = ID_THOLINS     ;
+            break;
+        default:
+            crash(-240);
+    }
+
+    //Now that we have the substances to generate, calculate the percentages
+    int reset_remain = (*remain);
+    double amounts[10] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+    for (;;)
+    {
+        round_robin(amounts, remain, 10, comps);
+
+        if (*remain < 0.0)
+        {
+            (*remain) = reset_remain;
+            for (int i = 0; i < 10; i++)
+                amounts[i] = 0.0;
+        }
+        else
+            break;
+    }
+
+    //Transfer to planet's atmosphere
+    for (int i = 0; i < 10; i++)
+        if (planet_ptr->atmosphere[comps[i]] == 0)
+            planet_ptr->atmosphere[comps[i]] = amounts[i];
 }
 
 //This function round-robins the generation of minor atmospheric components.
@@ -645,7 +666,7 @@ void round_robin(double *comps, double *remain, int num, int names[])
 
             sprintf(logtext, "         Generated %.15f", comps[choice]);
             print_log(logtext);
-            sprintf(logtext, " %-17s"                  , get_comp_name(names[choice]));
+            sprintf(logtext, " %-24s"                  , get_comp_name(names[choice]));
             print_log(logtext);
             sprintf(logtext, " %.15f remaining"        , (*remain)    );
             print_log(logtext);
@@ -701,43 +722,171 @@ void round_robin(double *comps, double *remain, int num, int names[])
     while (i < num);
 }
 
+//Calculates the average atomic weight and scale height for a given atmosphere.
+void calc_atomic_weight(struct Planet *planet_ptr)
+{
+    char logtext[100];
+
+    //Create the weights array
+    double weights[59];
+
+    weights[ID_HYDROGEN    ] = 0.00201588;  //Hydrogen
+    weights[ID_DEUTERIDE   ] = 0.00302204;  //Deuteride
+    weights[ID_HELIUM      ] = 0.0040026 ;  //Helium
+    weights[ID_CARBON_MONOX] = 0.02801   ;  //CO
+    weights[ID_CARBON_DIOX ] = 0.04401   ;  //CO2
+    weights[ID_METHYLENE   ] = 0.0140266 ;
+    weights[ID_METHANE     ] = 0.01604   ;  //Methane
+    weights[ID_ACETYLENE   ] = 0.026038  ;
+    weights[ID_ETHYLENE    ] = 0.028054  ;
+    weights[ID_ETHANE      ] = 0.03006904;  //Ethane
+    weights[ID_PROPANE     ] = 0.0441    ;
+    weights[ID_BUTADIYNE   ] = 0.05006   ;
+    weights[ID_THOLINS     ] = rand_double(0.01, 0.2); //Tholins
+    weights[ID_CYANOGEN    ] = 0.052036  ;
+    weights[ID_H_CYANIDE   ] = 0.0270253 ;  //HCN
+    weights[ID_M_CYANIDE   ] = 0.041053  ;
+    weights[ID_NITROGEN    ] = 0.0280134 ;  //Nitrogen
+    weights[ID_AMMONIA     ] = 0.017031  ;  //Ammonia
+    weights[ID_AZIC        ] = 0.041053  ;
+    weights[ID_NITRIC      ] = 0.03001   ;  //NO
+    weights[ID_NITRO_DIOX  ] = 0.0460055 ;  //NO2
+    weights[ID_NITROUS     ] = 0.044013  ;  //N2O
+    weights[ID_OXYGEN      ] = 0.031988  ;  //Oxygen
+    weights[ID_WATER       ] = 0.01801528;  //Water
+    weights[ID_PEROXIDE    ] = 0.034014  ;
+    weights[ID_OZONE       ] = 0.047997  ;
+    weights[ID_FLUORINE    ] = 0.0379968 ;  //Fluorine
+    weights[ID_HYDRO_F     ] = 0.020006  ;
+    weights[ID_BORON_F3    ] = 0.06781   ;
+    weights[ID_BORON2_F4   ] = 0.09761   ;
+    weights[ID_CARBON_F4   ] = 0.0880043 ;
+    weights[ID_SILICON_F4  ] = 0.104079  ;
+    weights[ID_PHOSPH_F3   ] = 0.08796897;
+    weights[ID_PHOSPH_F5   ] = 0.12596577;
+    weights[ID_SULFUR_F4   ] = 0.10805   ;
+    weights[ID_SULFUR_F6   ] = 0.14605   ;
+    weights[ID_NEON        ] = 0.0201797 ;  //Neon
+    weights[ID_SILANE      ] = 0.032117  ;
+    weights[ID_PHOSPHINE   ] = 0.03399758;  //Phosphine
+    weights[ID_HYDRO_S     ] = 0.03408   ;  //Hydrogen sulfide
+    weights[ID_SULFUR_DIOX ] = 0.064066  ;  //S02
+    weights[ID_SULFUR_TRIOX] = 0.080066  ;  //S03
+    weights[ID_CHLORINE    ] = 0.0709056 ;  //Chlorine
+    weights[ID_HYDRO_CL    ] = 0.03646   ;
+    weights[ID_BORON_CL3   ] = 0.1172    ;
+    weights[ID_CHLOROFORM  ] = 0.1194    ;
+    weights[ID_CARBON_CL4  ] = 0.1538    ;
+    weights[ID_SILICON_CL4 ] = 0.1699    ;
+    weights[ID_NITROGEN_CL3] = 0.1204    ;
+    weights[ID_PHOSPH_CL5  ] = 0.2082    ;
+    weights[ID_ARGON       ] = 0.039948  ;  //Argon
+    weights[ID_BROMINE     ] = 0.159808  ;  //Bromine
+    weights[ID_HYDRO_BR    ] = 0.080912  ;
+    weights[ID_BORON_BR3   ] = 0.25052   ;
+    weights[ID_SILICON_BR4 ] = 0.3477    ;
+    weights[ID_PHOSPH_BR3  ] = 0.27069   ;
+    weights[ID_ARSENIC_BR3 ] = 0.31463   ;
+    weights[ID_KRYPTON     ] = 0.083798  ;  //Krypton
+    weights[ID_XENON       ] = 0.131293  ;  //Xenon
+
+    //Calculate average atomic weight
+    double density = 0.0;
+    for (int i = 0; i < 59; i++)
+    {
+        density += (planet_ptr->atmosphere[i]) * (weights[i]);
+    }
+
+    density *= 10;
+
+    sprintf(logtext, "         Average atomic weight: %f kg/mol\n", density);
+    print_log(logtext);
+
+    if (density > 0.0)
+    {
+        planet_ptr->atmo_pres = rand_double(0.0, 100.0);
+
+        planet_ptr->atmo_dens = (planet_ptr->atmo_pres * 101325 * density) / (planet_ptr->surf_temp * GAS_CONST);
+
+        planet_ptr->atmo_high = (planet_ptr->surf_temp * GAS_CONST) / (planet_ptr->surf_grav * GRAVITY * density);
+
+        if (planet_ptr->type == TYPE_GAS_GIANT ||
+            planet_ptr->type == TYPE_GAS_SUPER ||
+            planet_ptr->type == TYPE_GAS_PUFFY ||
+            planet_ptr->type == TYPE_GAS_HOT   ||
+            planet_ptr->type == TYPE_ICE_DWARF ||
+            planet_ptr->type == TYPE_ICE_GIANT  )
+        {
+            planet_ptr->atmo_high = (planet_ptr->atmo_high * 10.0) + fudge_double(20000.0);
+        }
+    }
+}
+
 //Gets a string name for an atmo comp based on its id
 char* get_comp_name(int num)
 {
     switch (num)
     {
-        case  0: return "hydrogen,"        ;
-        case  1: return "helium,"          ;
-        case  2: return "argon,"           ;
-        case  3: return "nitrogen,"        ;
-        case  4: return "oxygen,"          ;
-        case  5: return "random halogen,"  ;
-        case  6: return "random halogen,"  ;
-        case  7: return "random halogen,"  ;
-        case  8: return "random halogen,"  ;
-        case  9: return "random noble gas,";
-        case 10: return "random noble gas,";
-        case 11: return "random noble gas,";
-        case 12: return "deuteride,"       ;
-        case 13: return "methane,"         ;
-        case 14: return "ethane,"          ;
-        case 15: return "ammonia,"         ;
-        case 16: return "phosphine,"       ;
-        case 17: return "water, "          ;
-        case 18: return "hydrogen sulfide,";
-        case 19: return "carbon oxides,"   ;
-        case 20: return "sulfur oxides,"   ;
-        case 21: return "nitrogen oxides," ;
-        case 22: return "tholins,"         ;
-        case 23: return "cyanides,"        ;
-        //Special cases for the photosphere
-        case 24: return "neon,"            ;
-        case 25: return "sodium,"          ;
-        case 26: return "magnesium,"       ;
-        case 27: return "silicon,"         ;
-        case 28: return "phosphorous,"     ;
-        case 29: return "sulfur,"          ;
-        default: return "other gases,"     ;
+        case ID_HYDROGEN    : return "hydrogen,"                ;
+        case ID_DEUTERIDE   : return "hydrogen deuteride,"      ;
+        case ID_HELIUM      : return "helium,"                  ;
+        case ID_CARBON_MONOX: return "carbon monoxide,"         ;
+        case ID_CARBON_DIOX : return "carbon dioxide,"          ;
+        case ID_METHYLENE   : return "methylene,"               ;
+        case ID_METHANE     : return "methane,"                 ;
+        case ID_ACETYLENE   : return "acetylene,"               ;
+        case ID_ETHYLENE    : return "ethylene,"                ;
+        case ID_ETHANE      : return "ethane,"                  ;
+        case ID_PROPANE     : return "propane,"                 ;
+        case ID_BUTADIYNE   : return "butadiyne,"               ;
+        case ID_THOLINS     : return "tholins,"                 ;
+        case ID_CYANOGEN    : return "cyanogen,"                ;
+        case ID_H_CYANIDE   : return "hydrogen cyanide,"        ;
+        case ID_M_CYANIDE   : return "methyl cyanide,"          ;
+        case ID_NITROGEN    : return "nitrogen,"                ;
+        case ID_AMMONIA     : return "ammonia,"                 ;
+        case ID_AZIC        : return "azic acid,"               ;
+        case ID_NITRIC      : return "nitric oxide,"            ;
+        case ID_NITRO_DIOX  : return "nitrogen dioxide,"        ;
+        case ID_NITROUS     : return "nitrous oxide,"           ;
+        case ID_OXYGEN      : return "oxygen,"                  ;
+        case ID_WATER       : return "water vapor,"             ;
+        case ID_PEROXIDE    : return "hydrogen peroxide,"       ;
+        case ID_OZONE       : return "ozone,"                   ;
+        case ID_FLUORINE    : return "fluorine,"                ;
+        case ID_HYDRO_F     : return "hydrogen fluoride,"       ;
+        case ID_BORON_F3    : return "boron trifluoride,"       ;
+        case ID_BORON2_F4   : return "diboron tetrafluoride,"   ;
+        case ID_CARBON_F4   : return "carbon tetrafluoride,"    ;
+        case ID_SILICON_F4  : return "silicon tetrafluoride,"   ;
+        case ID_PHOSPH_F3   : return "phosphorus trifluoride,"  ;
+        case ID_PHOSPH_F5   : return "phosphorus pentafluoride,";
+        case ID_SULFUR_F4   : return "sulfur tetrafluoride,"    ;
+        case ID_SULFUR_F6   : return "sulfur hexafluoride,"     ;
+        case ID_NEON        : return "neon,"                    ;
+        case ID_SILANE      : return "silane,"                  ;
+        case ID_PHOSPHINE   : return "phosphine,"               ;
+        case ID_HYDRO_S     : return "hydrogen sulfide,"        ;
+        case ID_SULFUR_DIOX : return "sulfur dioxide,"          ;
+        case ID_SULFUR_TRIOX: return "sulfur trioxide,"         ;
+        case ID_CHLORINE    : return "chlorine,"                ;
+        case ID_HYDRO_CL    : return "hydrogen chloride,"       ;
+        case ID_BORON_CL3   : return "boron trichloride,"       ;
+        case ID_CHLOROFORM  : return "chloroform,"              ;
+        case ID_CARBON_CL4  : return "carbon tetrachloride,"    ;
+        case ID_SILICON_CL4 : return "silicon tetrachloride,"   ;
+        case ID_NITROGEN_CL3: return "nitrogen trichloride,"    ;
+        case ID_PHOSPH_CL5  : return "phosphorus pentachloride,";
+        case ID_ARGON       : return "argon,"                   ;
+        case ID_BROMINE     : return "bromine,"                 ;
+        case ID_HYDRO_BR    : return "hydrogen bromide,"        ;
+        case ID_BORON_BR3   : return "boron tribromide,"        ;
+        case ID_SILICON_BR4 : return "silicon tetrabromide,"    ;
+        case ID_PHOSPH_BR3  : return "phosphorus tribromide,"   ;
+        case ID_ARSENIC_BR3 : return "arsenic tribromide,"      ;
+        case ID_KRYPTON     : return "krypton,"                 ;
+        case ID_XENON       : return "xenon,"                   ;
+        default             : return "other gases,"             ;
     }
 }
 
@@ -1007,6 +1156,14 @@ void calc_albedo(struct Star *star_ptr, struct Planet *planet_ptr)
         default:
             crash(-241);
     }
+}
+
+//Prints the given atmo gen to the log.
+void log_atmo_gen(struct Planet *planet_ptr, int id, double remain)
+{
+    char logtext[100];
+    sprintf(logtext, "         Generated %.15f %-26s %.15f remaining\n", planet_ptr->atmosphere[id], get_comp_name(id), remain);
+    print_log(logtext);
 }
 
 #endif // ATMO_H

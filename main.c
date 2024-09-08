@@ -120,11 +120,11 @@ int main()
                 print_orbit();
             else if (option2 == 4)
             {
-                print_atmo_comps();
+                print_atmo_comps_1();
             }
             else if (option2 == 5)
             {
-                print_atmo_types();
+                print_atmo_comps_2();
             }
         }
         else if (option1 == 1) //Star
